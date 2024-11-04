@@ -172,6 +172,7 @@ const Portfolio = () => {
       title: "DMH Localization Website",
       description: "Site institucional moderno de página única com animações interativas e efeitos de partículas.",
       technologies: ["HTML5", "Tailwind CSS", "JavaScript", "GSAP", "Particles.js"],
+      demoUrl: "https://bit.ly/dmhlocalization",
       repoUrl: "https://github.com/lgohere/dmh"
     },
     {
