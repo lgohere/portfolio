@@ -13,6 +13,8 @@ const translations = {
     whatsapp: "WhatsApp",
     whatsappMessage: "Hello! I'd like to talk about your portfolio.",
     projectTitles: {
+      "AI Agents Shelf": "AI Agents Shelf",
+      "Short Generator System": "YouTube Short Generator System",
       "Freight Quote Automation System": "Freight Quote Automation System",
       "Cactus Bot - Job Acceptance Automation": "Cactus Bot - Job Acceptance Automation",
       "Alan SDR Agent Interactive Documentation": "Alan SDR Agent Interactive Documentation",
@@ -25,6 +27,8 @@ const translations = {
       "Trot Geo Tracking": "Trot Geo Tracking"
     },
     projectDescriptions: {
+      "AI Agents Shelf": "Digital platform for AI agents showcasing interactive capabilities, real-time chat streaming, and GPU-accelerated visual effects.",
+      "Short Generator System": "Automated tool for creating, editing, and publishing short-form YouTube videos with transcription and API integration.",
       "Freight Quote Automation System": "Automated system for monitoring, extracting, and processing freight quote emails using IMAP, Groq API, and external freight calculation APIs.",
       "Cactus Bot - Job Acceptance Automation": "Automated bot for monitoring and accepting jobs on Cactus Global CRM platform with web control interface.",
       "Alan SDR Agent Interactive Documentation": "Interactive and responsive web documentation for the Alan SDR AI agent, featuring chat interface and visual effects.",
@@ -48,6 +52,8 @@ const translations = {
     whatsapp: "WhatsApp",
     whatsappMessage: "Olá! Gostaria de conversar sobre seu portfólio.",
     projectTitles: {
+      "AI Agents Shelf": "Estante Interativa de Agentes de IA",
+      "Short Generator System": "Sistema Gerador de Cortes do Youtube",
       "Freight Quote Automation System": "Sistema de Automação de Cotação de Frete",
       "Cactus Bot - Job Acceptance Automation": "Cactus Bot - Automação de Aceitação de Trabalhos",
       "Alan SDR Agent Interactive Documentation": "Documentação Interativa do Agente Alan SDR",
@@ -60,6 +66,8 @@ const translations = {
       "Trot Geo Tracking": "Rastreamento Geográfico Trot"
     },
     projectDescriptions: {
+      "AI Agents Shelf": "Plataforma digital para agentes de IA, exibindo capacidades interativas, streaming de chat em tempo real e efeitos visuais acelerados por GPU.",
+      "Short Generator System": "Ferramenta automatizada para criação, edição e publicação de vídeos curtos no YouTube com transcrição e integração via API.",
       "Freight Quote Automation System": "Sistema automatizado para monitoramento, extração e processamento de e-mails de cotação de frete usando IMAP, API Groq e APIs externas de cálculo.",
       "Cactus Bot - Job Acceptance Automation": "Bot automatizado para monitorar e aceitar trabalhos na plataforma Cactus Global CRM com interface web de controle.",
       "Alan SDR Agent Interactive Documentation": "Documentação web interativa e responsiva para o agente AI Alan SDR, com interface de chat e efeitos visuais.",
@@ -84,7 +92,7 @@ const TechStack = ({ technologies }) => (
   </div>
 );
 
-const ProjectCard = ({ title, description, technologies, repoUrl, demoUrl, language }) => (
+const ProjectCard = ({ title, description, technologies, repoUrl, demoUrl, previewUrl, language }) => (
   <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
     <h3 className="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">{title}</h3>
     <p className="text-gray-600 dark:text-gray-300 mb-4">{description}</p>
@@ -100,6 +108,12 @@ const ProjectCard = ({ title, description, technologies, repoUrl, demoUrl, langu
         <a href={demoUrl} target="_blank" rel="noopener noreferrer"
            className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
           <ExternalLink className="w-4 h-4 mr-1" /> {translations[language].demo}
+        </a>
+      )}
+      {previewUrl && (
+        <a href={previewUrl} target="_blank" rel="noopener noreferrer"
+           className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
+          <ExternalLink className="w-4 h-4 mr-1" /> Preview
         </a>
       )}
     </div>
@@ -137,6 +151,19 @@ const Portfolio = () => {
   };
 
   const projects = [
+    {
+      title: "AI Agents Shelf",
+      description: "Digital platform for AI agents showcasing interactive capabilities, real-time chat streaming, and GPU-accelerated visual effects.",
+      technologies: ["Vue", "Django", "Docker", "Langflow", "Vanilla.Tilt", "OpenAI API"],
+      demoUrl: "https://www.instagram.com/p/DEkh7JGvVOr"
+    },
+    {
+      title: "Short Generator System",
+      description: "Automated tool for creating, editing, and publishing short-form YouTube videos with transcription and API integration.",
+      technologies: ["Django", "Docker", "Redis", "Celery", "FFmpeg", "MoviePY", "OpenAI API", "Groq API"],
+      demoUrl: "https://www.instagram.com/p/DCpeuWmR5QR/",
+      previewUrl: "https://www.linkedin.com/posts/lgohere_youtubeshortsgenerator-youtubeautomation-activity-7268075929162182656-RPbw?utm_source=share&utm_medium=member_desktop"
+    },
     {
       title: "Freight Quote Automation System",
       description: "Sistema automatizado para monitoramento, extração e processamento de e-mails de cotação de frete usando IMAP, API Groq e APIs externas de cálculo.",
@@ -192,7 +219,7 @@ const Portfolio = () => {
       title: "MTH Bolos e Salgados",
       description: "Sistema de pedidos online para confeitaria com opções de entrega e retirada.",
       technologies: ["Vue.js", "JavaScript", "HTML", "CSS"],
-      demoUrl: "https://www.mthbolosesalgados.com.br",
+      demoUrl: "https://lgohere.github.io/th-webpage",
       repoUrl: "https://github.com/lgohere/th-webpage"
     },
     {
