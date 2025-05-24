@@ -1,374 +1,663 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, ExternalLink, X, Mail, Github, Linkedin, Moon, Sun, MessageCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import './Portfolio.css';
 
+// Simplified Intersection Observer Hook
+const useIntersectionObserver = (options = {}) => {
+  const [isIntersecting, setIsIntersecting] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      setIsIntersecting(entry.isIntersecting);
+    }, options);
+
+    const currentRef = ref.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
+  }, [options]);
+
+  return [ref, isIntersecting];
+};
+
+// Simple Fade In Component
+const FadeInText = ({ children, delay = 0, className = "" }) => {
+  const [ref, isIntersecting] = useIntersectionObserver({ threshold: 0.3 });
+  const [animated, setAnimated] = useState(false);
+
+  useEffect(() => {
+    if (isIntersecting && !animated) {
+      setTimeout(() => {
+        setAnimated(true);
+      }, delay);
+    }
+  }, [isIntersecting, animated, delay]);
+
+  return (
+    <div ref={ref} className={`${className} ${animated ? 'fade-in' : 'fade-out'}`}>
+      {children}
+    </div>
+  );
+};
+
+// Animated Counter
+const StatCounter = ({ end, duration = 2000, suffix = '', prefix = '' }) => {
+  const [count, setCount] = useState(0);
+  const [ref, isIntersecting] = useIntersectionObserver({ threshold: 0.5 });
+
+  useEffect(() => {
+    if (isIntersecting) {
+      let startTime;
+      const animate = (currentTime) => {
+        if (!startTime) startTime = currentTime;
+        const progress = Math.min((currentTime - startTime) / duration, 1);
+        setCount(Math.floor(progress * end));
+        
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      };
+      requestAnimationFrame(animate);
+    }
+  }, [isIntersecting, end, duration]);
+
+  return (
+    <div ref={ref} className="stat-number">
+      {prefix}{count}{suffix}
+    </div>
+  );
+};
+
+// Skill Card Component - Redesigned without percentages
+const SkillCard = ({ skill, delay = 0, category, level }) => {
+  const [ref, isIntersecting] = useIntersectionObserver({ threshold: 0.5 });
+  const [animated, setAnimated] = useState(false);
+
+  useEffect(() => {
+    if (isIntersecting && !animated) {
+      setTimeout(() => {
+        setAnimated(true);
+      }, delay);
+    }
+  }, [isIntersecting, animated, delay]);
+
+
+
+  return (
+    <div ref={ref} className={`skill-card ${animated ? 'animate-in' : ''}`}>
+      <div className="skill-header">
+        <h4 className="skill-name">{skill}</h4>
+        <span className="skill-level">{level}</span>
+      </div>
+      <div className="skill-category">{category}</div>
+    </div>
+  );
+};
+
+// Project Card Component
+const ProjectCard = ({ project, index }) => {
+  const [ref, isIntersecting] = useIntersectionObserver({ threshold: 0.3 });
+  const [animated, setAnimated] = useState(false);
+
+  useEffect(() => {
+    if (isIntersecting && !animated) {
+      setTimeout(() => {
+        setAnimated(true);
+      }, index * 200);
+    }
+  }, [isIntersecting, animated, index]);
+
+  return (
+    <div 
+      ref={ref} 
+      className={`project-card ${animated ? 'animate-in' : ''}`}
+    >
+      <div className="project-header">
+        <div>
+          <h3 className="project-title">{project.title}</h3>
+          {project.featured && <span className="featured-badge">{project.featuredText}</span>}
+        </div>
+      </div>
+      
+      <p className="project-description">{project.description}</p>
+      
+      <div className="tech-stack">
+        {project.technologies.map((tech, i) => (
+          <span key={i} className="tech-tag">{tech}</span>
+        ))}
+      </div>
+      
+      {project.metrics && (
+        <div className="metrics-box">
+          <div className="metrics-label">{project.metricsLabel}</div>
+          <div className="metrics-value">{project.metrics}</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Translation data
 const translations = {
-  en: {
-    title: "Full Stack Developer",
-    description: "Passionate about creating efficient solutions using Python, Javascript and modern web technologies.",
-    projects: "Featured Projects",
-    repository: "Repo",
-    demo: "Demo",
-    footer: "All rights reserved.",
-    email: "Email",
-    whatsapp: "WhatsApp",
-    whatsappMessage: "Hello! I'd like to talk about your portfolio.",
-    projectTitles: {
-      "AI Agents Shelf": "AI Agents Shelf",
-      "Short Generator System": "YouTube Short Generator System",
-      "Freight Quote Automation System": "Freight Quote Automation System",
-      "Cactus Bot - Job Acceptance Automation": "Cactus Bot - Job Acceptance Automation",
-      "Alan SDR Agent Interactive Documentation": "Alan SDR Agent Interactive Documentation",
-      "Enago Bot Control System": "Enago Bot Control System",
-      "YouTube Transcription System": "YouTube Transcription System",
-      "DMH Localization Website": "DMH Localization Website",
-      "Advanced Web Crawler": "Advanced Web Crawler",
-      "Leitura da Palavra": "Bible Reading System",
-      "MTH Bolos e Salgados": "MTH Cakes & Snacks",
-      "Trot Geo Tracking": "Trot Geo Tracking"
+  pt: {
+    // Navigation
+    nav: {
+      about: 'Sobre',
+      skills: 'Skills',
+      projects: 'Projetos',
+      contact: 'Contato'
     },
-    projectDescriptions: {
-      "AI Agents Shelf": "Digital platform for AI agents showcasing interactive capabilities, real-time chat streaming, and GPU-accelerated visual effects.",
-      "Short Generator System": "Automated tool for creating, editing, and publishing short-form YouTube videos with transcription and API integration.",
-      "Freight Quote Automation System": "Automated system for monitoring, extracting, and processing freight quote emails using IMAP, Groq API, and external freight calculation APIs.",
-      "Cactus Bot - Job Acceptance Automation": "Automated bot for monitoring and accepting jobs on Cactus Global CRM platform with web control interface.",
-      "Alan SDR Agent Interactive Documentation": "Interactive and responsive web documentation for the Alan SDR AI agent, featuring chat interface and visual effects.",
-      "Enago Bot Control System": "Control system for automated job acceptance on Enago platform with web interface and advanced monitoring.",
-      "YouTube Transcription System": "Full-stack application for extracting and processing YouTube video transcriptions.",
-      "DMH Localization Website": "Modern single-page institutional website with interactive animations and particle effects.",
-      "Advanced Web Crawler": "Sophisticated web crawler with ethical considerations, text processing, and JSONL output format.",
-      "Leitura da Palavra": "Biblical search and reading system with API integration.",
-      "MTH Bolos e Salgados": "Online ordering system for a bakery with delivery and pickup options.",
-      "Trot Geo Tracking": "Open-source project for implementing geospatial data tracking and visualization."
+    
+    // Hero Section
+    hero: {
+      greeting: '',
+      title: 'Lead Full Stack Developer & Arquiteto de Soluções Digitais',
+      subtitle: 'Desenvolvimento com IA • Automação End-to-End',
+      tagline: 'Inovação • Tecnologia • Resultados',
+      description: 'Transformo ideias em soluções tecnológicas inovadoras com abordagem AI-Enhanced. Especializado em desenvolvimento full-stack, automação end-to-end e arquitetura de soluções digitais escaláveis.',
+      viewProjects: 'Ver Projetos',
+      letsChat: 'Vamos Conversar'
+    },
+    
+    // Stats
+    stats: [
+      { number: 30, suffix: '+', label: 'Projetos Entregues' },
+      { number: 4, suffix: '+', label: 'Anos de Experiência' },
+      { number: 83, suffix: '%', label: 'Redução em Processos' },
+      { number: 99, suffix: '%', label: 'Uptime de Sistemas' }
+    ],
+    
+    // About
+    about: {
+      title: 'Sobre Mim',
+      highlightTitle: 'Transformação Digital com Propósito',
+      highlightText: 'Com 4 anos de experiência sólida em tecnologia, especializo-me em criar soluções que realmente fazem a diferença. Minha abordagem combina expertise técnica com visão estratégica para entregar resultados mensuráveis e impacto real.',
+      expertiseAreas: [
+        {
+          title: 'Inteligência Artificial',
+          description: 'Desenvolvimento de soluções com Claude, OpenAI e Gemini para automação, análise de dados e processamento de linguagem natural.'
+        },
+        {
+          title: 'Automação de Processos',
+          description: 'Criação de workflows automatizados com N8N e Evolution API para otimizar operações e reduzir custos operacionais.'
+        },
+        {
+          title: 'Desenvolvimento Full Stack',
+          description: 'Construção de aplicações web completas com Python/Django e Vue.js, focando em performance e experiência do usuário.'
+        },
+        {
+          title: 'Arquitetura de Sistemas',
+          description: 'Design de arquiteturas escaláveis com Docker e PostgreSQL para aplicações de alta demanda.'
+        }
+      ]
+    },
+    
+    // Skills
+    skills: {
+      title: 'Competências Técnicas',
+      list: [
+        { skill: 'Python/Django', level: 'Especialista', category: 'Backend' },
+        { skill: 'Vue.js/JavaScript', level: 'Avançado', category: 'Frontend' },
+        { skill: 'Claude/GPT/Gemini', level: 'Especialista', category: 'IA' },
+        { skill: 'N8N/Evolution API', level: 'Especialista', category: 'Automação' },
+        { skill: 'PostgreSQL/Supabase', level: 'Avançado', category: 'Database' },
+        { skill: 'Docker/Coolify', level: 'Avançado', category: 'DevOps' },
+        { skill: 'Figma/LeonardoAI/Ideogram', level: 'Avançado', category: 'Creative' },
+        { skill: 'Video/CapCut/Kling AI', level: 'Avançado', category: 'Multimedia' }
+      ]
+    },
+    
+    // Projects
+    projects: {
+      title: 'Projetos em Destaque',
+      list: [
+        {
+          title: 'Salus Water - Ecossistema Digital',
+          description: 'Arquitetura completa de soluções digitais para empresa de sistemas de filtração de água situada na Florida USA. Liderança em desenvolvimento full-stack, integração de IA e automação de processos empresariais.',
+          technologies: ['Python', 'Django', 'Vue.js', 'AI Integration', 'Docker', 'Infrastructure'],
+          metrics: 'Posição atual: Lead Full Stack Developer & Arquiteto de Soluções Digitais',
+          metricsLabel: 'Status',
+          featured: true,
+          featuredText: 'Atual'
+        },
+        {
+          title: 'AutoVideoGen - Sistema de Produção Automatizada',
+          description: 'Sistema de IA avançada que automatiza completamente a criação de videoclipes infantis a partir de arquivos de áudio. Pipeline end-to-end com múltiplas APIs de IA para geração de conteúdo visual coerente.',
+          technologies: ['Python', 'Streamlit', 'OpenAI GPT-4o', 'Leonardo.AI', 'Kling.AI', 'Groq Whisper', 'FFmpeg'],
+          metrics: '70% redução no tempo de processamento, 95% consistência visual, pipeline paralelo',
+          metricsLabel: 'Performance',
+          featured: true,
+          featuredText: 'Inovação'
+        },
+        {
+          title: 'WOA Network - Localização Musical',
+          description: 'Plataforma de adaptação cultural e dublagem musical em parceria com engenheiro vencedor do Grammy Latino. Adaptação de 700+ músicas com impacto global massivo.',
+          technologies: ['Cultural Adaptation', 'Audio Engineering', 'Content Creation', 'YouTube', 'Music Production'],
+          metrics: '60+ milhões de visualizações, 700+ músicas adaptadas, 1.9M views em single',
+          metricsLabel: 'Impacto',
+          featured: true,
+          featuredText: 'Destaque'
+        },
+        {
+          title: 'Allive AI Solutions Platform',
+          description: 'Marketplace vertical de IA com deployment automatizado. Agentes especializados com capacidade de engajamento ativo em vendas e sistema de chat em tempo real com parsing de markdown.',
+          technologies: ['Python', 'Django', 'OpenAI', 'LangChain', 'PostgreSQL', 'Vue.js', 'Docker'],
+          metrics: '60% melhoria na eficiência de deployment, arquitetura de microsserviços escalável',
+          metricsLabel: 'Impacto',
+          featured: false,
+          featuredText: 'Destaque'
+        },
+        {
+          title: 'Sistema de Processamento YouTube com IA',
+          description: 'Sistema automatizado de processamento de vídeo usando Moviepy, reduzindo tempo de edição em 83% (de 60 para 10 minutos) para conteúdo de livestreams de 2 horas.',
+          technologies: ['Python', 'Moviepy', 'Celery', 'Redis', 'ThreadPoolExecutor', 'OpenAI'],
+          metrics: '83% redução no tempo de edição (60→10 min), economia de $2,000+ mensais',
+          metricsLabel: 'Impacto',
+          featured: true,
+          featuredText: 'Destaque'
+        },
+        {
+          title: 'Cactus Bot - Sistema de Monitoramento',
+          description: 'Sistema de monitoramento 24/7 com filtragem inteligente e thresholds configuráveis. Infraestrutura tolerante a falhas com logs rotativos.',
+          technologies: ['Django', 'Selenium', 'AJAX', 'jQuery', 'Python'],
+          metrics: '99.9% uptime, 40% aumento na aquisição de projetos de alto valor',
+          metricsLabel: 'Impacto'
+        },
+        {
+          title: 'Enago Bot - Gestão Acadêmica',
+          description: 'Sistema automatizado para gestão acadêmica com interface de monitoramento em tempo real e operações thread-safe com zero conflitos.',
+          technologies: ['Django', 'PostgreSQL', 'HTML5', 'jQuery', 'Python'],
+          metrics: 'Resposta de minutos→segundos, 35% melhoria na captura de assignments',
+          metricsLabel: 'Impacto'
+        }
+      ]
+    },
+    
+    // Contact
+    contact: {
+      title: 'Vamos Trabalhar Juntos',
+      description: 'Pronto para transformar suas ideias em realidade? Entre em contato e vamos discutir como posso ajudar seu projeto a alcançar o próximo nível.',
+      whatsapp: 'WhatsApp',
+      email: 'Email',
+      linkedin: 'LinkedIn',
+      footer: '© 2025 Luiz Gouveia. Desenvolvido com tecnologia e paixão.',
+      whatsappMessage: 'Olá! Gostaria de conversar sobre oportunidades de colaboração.'
     }
   },
-  pt: {
-    title: "Desenvolvedor Full Stack",
-    description: "Apaixonado por criar soluções eficientes usando Python, Javascript e tecnologias web modernas.",
-    projects: "Projetos em Destaque",
-    repository: "Repositório",
-    demo: "Demonstração",
-    footer: "Todos os direitos reservados.",
-    email: "E-mail",
-    whatsapp: "WhatsApp",
-    whatsappMessage: "Olá! Gostaria de conversar sobre seu portfólio.",
-    projectTitles: {
-      "AI Agents Shelf": "Estante Interativa de Agentes de IA",
-      "Short Generator System": "Sistema Gerador de Cortes do Youtube",
-      "Freight Quote Automation System": "Sistema de Automação de Cotação de Frete",
-      "Cactus Bot - Job Acceptance Automation": "Cactus Bot - Automação de Aceitação de Trabalhos",
-      "Alan SDR Agent Interactive Documentation": "Documentação Interativa do Agente Alan SDR",
-      "Enago Bot Control System": "Sistema de Controle Bot Enago",
-      "YouTube Transcription System": "Sistema de Transcrição do YouTube",
-      "DMH Localization Website": "Site DMH Localization",
-      "Advanced Web Crawler": "Web Crawler Avançado",
-      "Leitura da Palavra": "Leitura da Palavra",
-      "MTH Bolos e Salgados": "MTH Bolos e Salgados",
-      "Trot Geo Tracking": "Rastreamento Geográfico Trot"
+  
+  en: {
+    // Navigation
+    nav: {
+      about: 'About',
+      skills: 'Skills',
+      projects: 'Projects',
+      contact: 'Contact'
     },
-    projectDescriptions: {
-      "AI Agents Shelf": "Plataforma digital para agentes de IA, exibindo capacidades interativas, streaming de chat em tempo real e efeitos visuais acelerados por GPU.",
-      "Short Generator System": "Ferramenta automatizada para criação, edição e publicação de vídeos curtos no YouTube com transcrição e integração via API.",
-      "Freight Quote Automation System": "Sistema automatizado para monitoramento, extração e processamento de e-mails de cotação de frete usando IMAP, API Groq e APIs externas de cálculo.",
-      "Cactus Bot - Job Acceptance Automation": "Bot automatizado para monitorar e aceitar trabalhos na plataforma Cactus Global CRM com interface web de controle.",
-      "Alan SDR Agent Interactive Documentation": "Documentação web interativa e responsiva para o agente AI Alan SDR, com interface de chat e efeitos visuais.",
-      "Enago Bot Control System": "Sistema de controle para aceitação automatizada de trabalhos na plataforma Enago com interface web e monitoramento avançado.",
-      "YouTube Transcription System": "Aplicação full-stack para extrair e processar transcrições de vídeos do YouTube.",
-      "DMH Localization Website": "Site institucional moderno de página única com animações interativas e efeitos de partículas.",
-      "Advanced Web Crawler": "Web crawler sofisticado com considerações éticas, processamento de texto e formato de saída JSONL.",
-      "Leitura da Palavra": "Sistema de busca e leitura bíblica com integração de API.",
-      "MTH Bolos e Salgados": "Sistema de pedidos online para confeitaria com opções de entrega e retirada.",
-      "Trot Geo Tracking": "Projeto open-source para implementação de rastreamento e visualização de dados geoespaciais."
+    
+    // Hero Section
+    hero: {
+      greeting: '',
+      title: 'Lead Full Stack Developer & Digital Solutions Architect',
+      subtitle: 'AI-Enhanced Development • End-to-End Automation',
+      tagline: 'Innovation • Technology • Results',
+      description: 'I transform ideas into innovative technological solutions with AI-Enhanced approach. Specialized in full-stack development, end-to-end automation, and scalable digital solutions architecture.',
+      viewProjects: 'View Projects',
+      letsChat: 'Let\'s Talk'
+    },
+    
+    // Stats
+    stats: [
+      { number: 30, suffix: '+', label: 'Projects Delivered' },
+      { number: 4, suffix: '+', label: 'Years of Experience' },
+      { number: 83, suffix: '%', label: 'Process Reduction' },
+      { number: 99, suffix: '%', label: 'System Uptime' }
+    ],
+    
+    // About
+    about: {
+      title: 'About Me',
+      highlightTitle: 'Digital Transformation with Purpose',
+      highlightText: 'With 4 years of solid experience in technology, I specialize in creating solutions that truly make a difference. My approach combines technical expertise with strategic vision to deliver measurable results and real impact.',
+      expertiseAreas: [
+        {
+          title: 'Artificial Intelligence',
+          description: 'Development of AI solutions using Claude, OpenAI, and Gemini for automation, data analysis, and natural language processing.'
+        },
+        {
+          title: 'Process Automation',
+          description: 'Creation of automated workflows with N8N and Evolution API to optimize operations and reduce operational costs.'
+        },
+        {
+          title: 'Full Stack Development',
+          description: 'Building complete web applications with Python/Django and Vue.js, focusing on performance and user experience.'
+        },
+        {
+          title: 'Systems Architecture',
+          description: 'Design of scalable architectures with Docker and PostgreSQL for high-demand applications.'
+        }
+      ]
+    },
+    
+    // Skills
+    skills: {
+      title: 'Technical Competencies',
+      list: [
+        { skill: 'Python/Django', level: 'Expert', category: 'Backend' },
+        { skill: 'Vue.js/JavaScript', level: 'Advanced', category: 'Frontend' },
+        { skill: 'Claude/GPT/Gemini', level: 'Expert', category: 'AI' },
+        { skill: 'N8N/Evolution API', level: 'Expert', category: 'Automation' },
+        { skill: 'PostgreSQL/Supabase', level: 'Advanced', category: 'Database' },
+        { skill: 'Docker/Coolify', level: 'Advanced', category: 'DevOps' },
+        { skill: 'Figma/LeonardoAI/Ideogram', level: 'Advanced', category: 'Creative' },
+        { skill: 'Video/CapCut/Kling AI', level: 'Advanced', category: 'Multimedia' }
+      ]
+    },
+    
+    // Projects
+    projects: {
+      title: 'Featured Projects',
+      list: [
+        {
+          title: 'Salus Water - Digital Ecosystem',
+          description: 'Complete digital solutions architecture for water filtration systems company located in Florida USA. Leading full-stack development, AI integration, and enterprise process automation.',
+          technologies: ['Python', 'Django', 'Vue.js', 'AI Integration', 'Docker', 'Infrastructure'],
+          metrics: 'Current position: Lead Full Stack Developer & Digital Solutions Architect',
+          metricsLabel: 'Status',
+          featured: true,
+          featuredText: 'Current'
+        },
+        {
+          title: 'AutoVideoGen - Automated Production System',
+          description: 'Advanced AI system that completely automates the creation of children\'s video clips from audio files. End-to-end pipeline with multiple AI APIs for coherent visual content generation.',
+          technologies: ['Python', 'Streamlit', 'OpenAI GPT-4o', 'Leonardo.AI', 'Kling.AI', 'Groq Whisper', 'FFmpeg'],
+          metrics: '70% processing time reduction, 95% visual consistency, parallel pipeline',
+          metricsLabel: 'Performance',
+          featured: true,
+          featuredText: 'Innovation'
+        },
+        {
+          title: 'WOA Network - Music Localization',
+          description: 'Cultural adaptation and music dubbing platform in partnership with Latin Grammy-winning audio engineer. 700+ songs adapted with massive global impact.',
+          technologies: ['Cultural Adaptation', 'Audio Engineering', 'Content Creation', 'YouTube', 'Music Production'],
+          metrics: '60+ million views, 700+ songs adapted, 1.9M views on single track',
+          metricsLabel: 'Impact',
+          featured: true,
+          featuredText: 'Featured'
+        },
+        {
+          title: 'Allive AI Solutions Platform',
+          description: 'Vertical AI marketplace with automated deployment. Specialized agents with active sales engagement capabilities and real-time chat system with markdown parsing.',
+          technologies: ['Python', 'Django', 'OpenAI', 'LangChain', 'PostgreSQL', 'Vue.js', 'Docker'],
+          metrics: '60% deployment efficiency improvement, scalable microservices architecture',
+          metricsLabel: 'Impact',
+          featured: false,
+          featuredText: 'Featured'
+        },
+        {
+          title: 'YouTube AI Processing System',
+          description: 'Automated video processing system using Moviepy, reducing editing time by 83% (from 60 to 10 minutes) for 2-hour livestream content.',
+          technologies: ['Python', 'Moviepy', 'Celery', 'Redis', 'ThreadPoolExecutor', 'OpenAI'],
+          metrics: '83% editing time reduction (60→10 min), $2,000+ monthly savings',
+          metricsLabel: 'Impact',
+          featured: true,
+          featuredText: 'Featured'
+        },
+        {
+          title: 'Cactus Bot - Monitoring System',
+          description: '24/7 automated monitoring system with intelligent filtering and configurable thresholds. Fault-tolerant infrastructure with rotating logs.',
+          technologies: ['Django', 'Selenium', 'AJAX', 'jQuery', 'Python'],
+          metrics: '99.9% uptime, 40% increase in high-value project acquisition',
+          metricsLabel: 'Impact'
+        },
+        {
+          title: 'Enago Bot - Academic Management',
+          description: 'Automated academic management system with real-time monitoring interface and thread-safe operations with zero conflicts.',
+          technologies: ['Django', 'PostgreSQL', 'HTML5', 'jQuery', 'Python'],
+          metrics: 'Response time: minutes→seconds, 35% improvement in assignment capture',
+          metricsLabel: 'Impact'
+        }
+      ]
+    },
+    
+    // Contact
+    contact: {
+      title: 'Let\'s Work Together',
+      description: 'Ready to transform your ideas into reality? Get in touch and let\'s discuss how I can help your project reach the next level.',
+      whatsapp: 'WhatsApp',
+      email: 'Email',
+      linkedin: 'LinkedIn',
+      footer: '© 2025 Luiz Gouveia. Built with technology and passion.',
+      whatsappMessage: 'Hello! I would like to discuss collaboration opportunities.'
     }
   }
 };
 
-const TechStack = ({ technologies }) => (
-  <div className="flex flex-wrap gap-2">
-    {technologies.map((tech, index) => (
-      <span key={index} className="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-100 rounded-full">
-        {tech}
-      </span>
-    ))}
-  </div>
-);
-
-const ProjectCard = ({ title, description, technologies, repoUrl, demoUrl, previewUrl, language }) => (
-  <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
-    <h3 className="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">{title}</h3>
-    <p className="text-gray-600 dark:text-gray-300 mb-4">{description}</p>
-    <TechStack technologies={technologies} />
-    <div className="mt-4 flex gap-4">
-      {repoUrl && (
-        <a href={repoUrl} target="_blank" rel="noopener noreferrer" 
-           className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-          <Github className="w-4 h-4 mr-1" /> {translations[language].repository}
-        </a>
-      )}
-      {demoUrl && (
-        <a href={demoUrl} target="_blank" rel="noopener noreferrer"
-           className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-          <ExternalLink className="w-4 h-4 mr-1" /> {translations[language].demo}
-        </a>
-      )}
-      {previewUrl && (
-        <a href={previewUrl} target="_blank" rel="noopener noreferrer"
-           className="flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300">
-          <ExternalLink className="w-4 h-4 mr-1" /> Preview
-        </a>
-      )}
-    </div>
-  </div>
-);
-
+// Main Portfolio Component
 const Portfolio = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark';
-    }
-    return false;
-  });
-  const [language, setLanguage] = useState('en');
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [language, setLanguage] = useState('pt');
 
-  const getWhatsAppLink = () => {
-    const phoneNumber = "5513981942956";
-    const message = encodeURIComponent(translations[language].whatsappMessage);
-    return `https://wa.me/${phoneNumber}?text=${message}`;
-  };
+  const t = translations[language];
 
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
-
-  const toggleLanguage = () => {
-    setLanguage(prev => prev === 'en' ? 'pt' : 'en');
-  };
-
-  const projects = [
-    {
-      title: "AI Agents Shelf",
-      description: "Digital platform for AI agents showcasing interactive capabilities, real-time chat streaming, and GPU-accelerated visual effects.",
-      technologies: ["Vue", "Django", "Docker", "Langflow", "Vanilla.Tilt", "OpenAI API"],
-      demoUrl: "https://www.instagram.com/p/DEkh7JGvVOr"
-    },
-    {
-      title: "Short Generator System",
-      description: "Automated tool for creating, editing, and publishing short-form YouTube videos with transcription and API integration.",
-      technologies: ["Django", "Docker", "Redis", "Celery", "FFmpeg", "MoviePY", "OpenAI API", "Groq API"],
-      demoUrl: "https://www.instagram.com/p/DCpeuWmR5QR/",
-      previewUrl: "https://www.linkedin.com/posts/lgohere_youtubeshortsgenerator-youtubeautomation-activity-7268075929162182656-RPbw?utm_source=share&utm_medium=member_desktop"
-    },
-    {
-      title: "Freight Quote Automation System",
-      description: "Sistema automatizado para monitoramento, extração e processamento de e-mails de cotação de frete usando IMAP, API Groq e APIs externas de cálculo.",
-      technologies: ["Python", "IMAP", "Groq API", "API Integration", "Natural Language Processing"],
-      repoUrl: "https://github.com/lgohere/agentefrete"
-    },
-    {
-      title: "Cactus Bot - Job Acceptance Automation",
-      description: "Bot automatizado para monitorar e aceitar trabalhos na plataforma Cactus Global CRM com interface web de controle.",
-      technologies: ["Python", "Django", "Selenium", "Threading", "Web Automation"],
-      repoUrl: "https://github.com/lgohere/cactusbot"
-    },
-    {
-      title: "Alan SDR Agent Interactive Documentation",
-      description: "Documentação web interativa e responsiva para o agente AI Alan SDR, com interface de chat e efeitos visuais.",
-      technologies: ["HTML5", "CSS3", "JavaScript", "CSS Grid", "Flexbox"],
-      demoUrl: "https://bit.ly/superagente-desafio",
-      repoUrl: "https://github.com/lgohere/desafio-prompt"
-    },
-    {
-      title: "Enago Bot Control System",
-      description: "Sistema de controle para aceitação automatizada de trabalhos na plataforma Enago com interface web e monitoramento avançado.",
-      technologies: ["Python", "Django", "Selenium", "PostgreSQL", "jQuery"],
-      repoUrl: "https://github.com/lgohere/enagobot"
-    },
-    {
-      title: "YouTube Transcription System",
-      description: "Aplicação full-stack para extrair e processar transcrições de vídeos do YouTube.",
-      technologies: ["Python", "Django", "BeautifulSoup", "youtube-dl", "ThreadPoolExecutor"],
-      repoUrl: "https://github.com/lgohere/yt-transcriptor"
-    },
-    {
-      title: "DMH Localization Website",
-      description: "Site institucional moderno de página única com animações interativas e efeitos de partículas.",
-      technologies: ["HTML5", "Tailwind CSS", "JavaScript", "GSAP", "Particles.js"],
-      demoUrl: "https://bit.ly/dmhlocalization",
-      repoUrl: "https://github.com/lgohere/dmh"
-    },
-    {
-      title: "Advanced Web Crawler",
-      description: "Web crawler sofisticado com considerações éticas, processamento de texto e formato de saída JSONL.",
-      technologies: ["Python", "BeautifulSoup", "NLTK", "Web Scraping", "Natural Language Processing"],
-      repoUrl: "https://github.com/lgohere/crawler"
-    },
-    {
-      title: "Leitura da Palavra",
-      description: "Sistema de busca e leitura bíblica com integração de API.",
-      technologies: ["Django", "JavaScript", "HTML", "CSS", "fly.io"],
-      demoUrl: "https://leituradapalavra.fly.dev",
-      repoUrl: "https://github.com/lgohere/leituradapalavra"
-    },
-    {
-      title: "MTH Bolos e Salgados",
-      description: "Sistema de pedidos online para confeitaria com opções de entrega e retirada.",
-      technologies: ["Vue.js", "JavaScript", "HTML", "CSS"],
-      demoUrl: "https://lgohere.github.io/th-webpage",
-      repoUrl: "https://github.com/lgohere/th-webpage"
-    },
-    {
-      title: "Trot Geo Tracking",
-      description: "Projeto open-source para implementação de rastreamento e visualização de dados geoespaciais.",
-      technologies: ["Vue.js", "JavaScript", "Geospatial APIs"],
-      repoUrl: "https://github.com/lgohere/trot-geo-tracking"
-    }
+  const techStack = [
+    'Python', 'Django', 'Vue.js', 'JavaScript', 'PostgreSQL',
+    'Docker', 'N8N', 'Evolution API', 'OpenAI', 'LangChain',
+    'Supabase', 'Redis', 'RabbitMQ', 'Coolify', 'Cloudflare',
+    'ElevenLabs', 'Groq', 'Midjourney', 'CapCut', 'GIMP',
+    'Cursor', 'Figma', 'GSAP', 'Tailwind CSS', 'Selenium',
+    'Celery', 'ThreadPoolExecutor', 'Hetzner', 'AWS S3', 'Kling AI',
+    'MCP', 'A2A', 'Claude 4', 'Gemini'
   ];
 
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
+  const toggleLanguage = () => {
+    setLanguage(language === 'pt' ? 'en' : 'pt');
+  };
+
+  const scrollToSection = (sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const getWhatsAppLink = () => {
+    return `https://wa.me/5513981942956`;
+  };
+
   return (
-    <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200`}>
-      <nav className="bg-white dark:bg-gray-800 shadow-lg fixed w-full z-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <span className="text-xl font-bold text-gray-800 dark:text-white">Luiz Gouveia</span>
-            </div>
-            
-            {/* Desktop navigation com WhatsApp */}
-            <div className="hidden md:flex items-center space-x-8">
-              <button
-                onClick={toggleLanguage}
-                className="text-2xl hover:opacity-80 transition-opacity"
-                aria-label="Toggle language"
-              >
-                {language === 'en' ? '🇧🇷' : '🇺🇸'}
-              </button>
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
-                aria-label="Toggle dark mode"
-              >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-              {/* Social Links */}
-              <a href="https://github.com/lgohere" target="_blank" rel="noopener noreferrer"
-                 className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">
-                <Github className="h-5 w-5" />
-              </a>
-              <a href="https://www.linkedin.com/in/lgohere" target="_blank" rel="noopener noreferrer"
-                 className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">
-                <Linkedin className="h-5 w-5" />
-              </a>
-              <a href="mailto:lcpgou@gmail.com" 
-                 className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">
-                <Mail className="h-5 w-5" />
-              </a>
-              <a href={getWhatsAppLink()} 
-                 target="_blank" 
-                 rel="noopener noreferrer"
-                 className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
-              >
-                <MessageCircle className="h-5 w-5" />
-              </a>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="flex items-center md:hidden">
-              <button
-                onClick={toggleLanguage}
-                className="text-2xl hover:opacity-80 transition-opacity mr-4"
-              >
-                {language === 'en' ? '🇧🇷' : '🇺🇸'}
-              </button>
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white mr-4"
-              >
-                {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-600 dark:text-gray-300">
-                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-              </button>
-            </div>
-          </div>
+    <div className={`portfolio ${isDarkMode ? '' : 'light'}`}>
+      {/* Header */}
+      <header className="header">
+        <div className="container">
+          <div className="logo">Luiz Gouveia</div>
+          <nav className="nav">
+            <button className="nav-btn" onClick={() => scrollToSection('about')}>
+              {t.nav.about}
+            </button>
+            <button className="nav-btn" onClick={() => scrollToSection('skills')}>
+              {t.nav.skills}
+            </button>
+            <button className="nav-btn" onClick={() => scrollToSection('projects')}>
+              {t.nav.projects}
+            </button>
+            <button className="nav-btn" onClick={() => scrollToSection('contact')}>
+              {t.nav.contact}
+            </button>
+            <button className="nav-btn" onClick={toggleLanguage}>
+              {language === 'pt' ? '🇺🇸' : '🇧🇷'}
+            </button>
+            <button className="nav-btn" onClick={toggleTheme}>
+              {isDarkMode ? '☀️' : '🌙'}
+            </button>
+          </nav>
         </div>
-
-        {isMenuOpen && (
-          <div className="md:hidden bg-white dark:bg-gray-800 border-t dark:border-gray-700">
-            <div className="px-4 py-2 space-y-4">
-              <a href="https://github.com/lgohere" target="_blank" rel="noopener noreferrer"
-                 className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">
-                <Github className="h-5 w-5 mr-2" /> GitHub
-              </a>
-              <a href="https://www.linkedin.com/in/lgohere" target="_blank" rel="noopener noreferrer"
-                 className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">
-                <Linkedin className="h-5 w-5 mr-2" /> LinkedIn
-              </a>
-              <a href="mailto:lcpgou@gmail.com" 
-                 className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white">
-                <Mail className="h-5 w-5 mr-2" /> {translations[language].email}
-              </a>
-              <a href={getWhatsAppLink()}
-                 target="_blank" 
-                 rel="noopener noreferrer"
-                 className="flex items-center text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white"
-              >
-                <MessageCircle className="h-5 w-5 mr-2" /> {translations[language].whatsapp}
-              </a>
-            </div>
-          </div>
-        )}
-      </nav>
+      </header>
 
       {/* Hero Section */}
-      <div className="pt-24 pb-12 px-4 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-blue-900">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            {translations[language].title}
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
-            {translations[language].description}
-          </p>
-          <div className="flex flex-wrap gap-4">
-            <TechStack technologies={[
-              "Python", "Django", "JavaScript", "Vue.js", "React",
-              "HTML5", "CSS3", "Selenium", "PostgreSQL", "DevOps"
-            ]} />
+      <section className="hero" id="hero">
+        <div className="container">
+          <div className="hero-content-full">
+            <div className="hero-text-center">
+
+              
+              <div className="hero-titles">
+                <FadeInText delay={400}>
+                  <h1 className="hero-title">
+                    {t.hero.title}
+                  </h1>
+                </FadeInText>
+                <FadeInText delay={600}>
+                  <h2 className="hero-subtitle">
+                    {t.hero.subtitle}
+                  </h2>
+                </FadeInText>
+                <FadeInText delay={800}>
+                  <p className="hero-tagline">
+                    {t.hero.tagline}
+                  </p>
+                </FadeInText>
+              </div>
+              
+              <FadeInText delay={1000}>
+                <p className="hero-description">
+                  {t.hero.description}
+                </p>
+              </FadeInText>
+              
+              <FadeInText delay={1200}>
+                <div className="hero-actions">
+                  <a href="#projects" className="btn btn-primary">
+                    {t.hero.viewProjects}
+                  </a>
+                  <a href={getWhatsAppLink()} className="btn btn-secondary" target="_blank" rel="noopener noreferrer">
+                    {t.hero.letsChat}
+                  </a>
+                </div>
+              </FadeInText>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Projects Section */}
-      <div className="py-12 px-4">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-            {translations[language].projects}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project, index) => (
-              <ProjectCard 
-                key={index} 
-                {...project}
-                title={translations[language].projectTitles[project.title]}
-                description={translations[language].projectDescriptions[project.title]}
-                language={language}
+      {/* Stats Section */}
+      <section className="stats">
+        <div className="container">
+          <div className="stats-grid">
+            {t.stats.map((stat, index) => (
+              <div key={index} className="stat-item">
+                <StatCounter 
+                  end={stat.number} 
+                  suffix={stat.suffix}
+                  prefix={stat.prefix}
+                />
+                <div className="stat-label">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section className="about" id="about">
+        <div className="container">
+          <h2 className="section-title">{t.about.title}</h2>
+          <div className="about-content">
+            <div className="about-highlight">
+              <h3>{t.about.highlightTitle}</h3>
+              <p>{t.about.highlightText}</p>
+            </div>
+            
+            <div className="expertise-areas">
+              {t.about.expertiseAreas.map((area, index) => (
+                <div key={index} className="expertise-item">
+                  <h4>{area.title}</h4>
+                  <p>{area.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="tech-stack-simple">
+            {techStack.map((tech, index) => (
+              <div key={index} className="tech-item">
+                <div className="tech-item-name">{tech}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Skills Section */}
+      <section className="skills" id="skills">
+        <div className="container">
+          <h2 className="section-title">{t.skills.title}</h2>
+          <div className="skills-grid">
+            {t.skills.list.map((skill, index) => (
+              <SkillCard 
+                key={index}
+                skill={skill.skill}
+                level={skill.level}
+                category={skill.category}
+                delay={index * 100}
               />
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 border-t dark:border-gray-700 py-8">
-        <div className="max-w-7xl mx-auto px-4 text-center text-gray-600 dark:text-gray-300">
-          <p>© 2024 Luiz Gouveia. {translations[language].footer}</p>
+      {/* Projects Section */}
+      <section className="projects" id="projects">
+        <div className="container">
+          <h2 className="section-title">{t.projects.title}</h2>
+          <div className="projects-grid">
+            {t.projects.list.map((project, index) => (
+              <ProjectCard 
+                key={index}
+                project={project}
+                index={index}
+              />
+            ))}
+          </div>
         </div>
-      </footer>
+      </section>
+
+      {/* Contact Section */}
+      <section className="contact" id="contact">
+        <div className="container">
+          <div className="contact-content">
+            <h2 className="section-title">{t.contact.title}</h2>
+            <p className="contact-description">
+              {t.contact.description}
+            </p>
+            
+            <div className="contact-methods">
+              <a href={getWhatsAppLink()} className="contact-btn" target="_blank" rel="noopener noreferrer">
+                {t.contact.whatsapp}
+              </a>
+              <a href="mailto:lcpgou@gmail.com" className="contact-btn">
+                {t.contact.email}
+              </a>
+              <a href="https://linkedin.com/in/luizgouveia" className="contact-btn" target="_blank" rel="noopener noreferrer">
+                {t.contact.linkedin}
+              </a>
+            </div>
+            
+            <div className="contact-footer">
+              <p>{t.contact.footer}</p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };
