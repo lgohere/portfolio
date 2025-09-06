@@ -321,7 +321,8 @@ body {
   border-radius: 16px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
 .stat-item:hover {
@@ -364,7 +365,10 @@ body {
   font-weight: 700;
   margin-bottom: var(--spacing-md);
   color: var(--text-primary);
-  font-style: italic;
+  text-decoration: underline;
+  text-decoration-color: var(--accent-primary);
+  text-underline-offset: 8px;
+  text-decoration-thickness: 3px;
 }
 
 .about-highlight p {
@@ -402,7 +406,8 @@ body {
   border-radius: 12px;
   padding: var(--spacing-md);
   border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
 .position-card:hover {
@@ -430,6 +435,17 @@ body {
   border-radius: 20px;
   font-size: var(--font-size-sm);
   font-weight: 600;
+}
+
+/* Mobile salary badges */
+@media (max-width: 480px) {
+  .position-salary {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-base);
+    min-height: 32px;
+    display: flex;
+    align-items: center;
+  }
 }
 
 .position-description {
@@ -472,7 +488,8 @@ body {
   background: var(--bg-secondary);
   border-radius: 16px;
   border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
 .expertise-item:hover {
@@ -586,9 +603,9 @@ body {
   background: var(--bg-tertiary);
   border-radius: 16px;
   border: 1px solid var(--border-color);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(20px) scale(0.95);
   height: auto;
   min-height: 120px;
   display: flex;
@@ -598,7 +615,9 @@ body {
 
 .skill-card.animate-in {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .skill-card:hover {
@@ -807,17 +826,19 @@ body {
   font-size: var(--font-size-sm);
 }
 
-/* Animations */
+/* Optimized Animations */
 .fade-in {
   opacity: 1;
   transform: translateY(0);
-  transition: all 0.8s ease;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .fade-out {
   opacity: 0;
-  transform: translateY(20px);
-  transition: all 0.8s ease;
+  transform: translateY(15px);
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Responsive Design */
@@ -964,9 +985,12 @@ body {
   }
   
   .skill-level {
-    font-size: 0.7rem;
-    padding: 0.25rem 0.5rem;
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
     align-self: flex-start;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
   }
 
   .skill-category {
@@ -978,7 +1002,14 @@ body {
   }
 
   .contact-methods {
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md);
+  }
+  
+  .contact-btn {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    font-size: var(--font-size-base);
+    min-height: 56px;
+    font-weight: 600;
   }
 
   .tech-stack-simple {
@@ -994,13 +1025,13 @@ body {
 /* Mobile */
 @media (max-width: 480px) {
   :root {
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 0.75rem;
-    --spacing-lg: 1rem;
-    --spacing-xl: 1.5rem;
-    --spacing-2xl: 2rem;
-    --spacing-3xl: 2.5rem;
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.25rem;
+    --spacing-xl: 1.75rem;
+    --spacing-2xl: 2.25rem;
+    --spacing-3xl: 3rem;
   }
   
   .team-breakdown {
@@ -1042,6 +1073,9 @@ body {
     flex: 1;
     text-align: center;
     min-width: 0;
+    min-height: 44px;
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-sm);
   }
 
   .hero {
@@ -1065,7 +1099,16 @@ body {
 
   .stats-grid {
     grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-md);
+  }
+  
+  .stat-item {
+    padding: var(--spacing-lg);
+    min-height: 120px;
+  }
+  
+  .stat-number {
+    font-size: var(--font-size-4xl);
   }
 
   .project-card {
@@ -1073,8 +1116,18 @@ body {
   }
 
   .btn {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: var(--font-size-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-base);
+    min-height: 48px;
+    font-weight: 600;
+  }
+  
+  /* Hero button específico para mobile */
+  .hero .btn {
+    min-width: 280px;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    font-size: var(--font-size-lg);
+    min-height: 56px;
   }
 
   .tech-stack-simple {

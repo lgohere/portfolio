@@ -1,41 +1,55 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Portfolio.css';
 
-// Simplified Intersection Observer Hook
+// Fixed Intersection Observer Hook
 const useIntersectionObserver = (options = {}) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
   const ref = useRef(null);
+  const observerRef = useRef(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(([entry]) => {
-      setIsIntersecting(entry.isIntersecting);
-    }, options);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsIntersecting(true);
+          // Keep observing for counters
+        }
+      }, 
+      {
+        threshold: 0.3,
+        rootMargin: '20px',
+        ...options
+      }
+    );
 
+    observerRef.current = observer;
     const currentRef = ref.current;
+    
     if (currentRef) {
       observer.observe(currentRef);
     }
 
     return () => {
-      if (currentRef) {
-        observer.unobserve(currentRef);
+      if (observerRef.current && currentRef) {
+        observerRef.current.unobserve(currentRef);
       }
     };
-  }, [options]);
+  }, []);
 
   return [ref, isIntersecting];
 };
 
-// Simple Fade In Component
+// Optimized Fade In Component
 const FadeInText = ({ children, delay = 0, className = "" }) => {
-  const [ref, isIntersecting] = useIntersectionObserver({ threshold: 0.3 });
+  const [ref, isIntersecting] = useIntersectionObserver();
   const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
     if (isIntersecting && !animated) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setAnimated(true);
       }, delay);
+      return () => clearTimeout(timer);
     }
   }, [isIntersecting, animated, delay]);
 
@@ -46,24 +60,36 @@ const FadeInText = ({ children, delay = 0, className = "" }) => {
   );
 };
 
-// Animated Counter
-const StatCounter = ({ end, duration = 2000, suffix = '', prefix = '' }) => {
+// Fixed Animated Counter
+const StatCounter = ({ end, duration = 1200, suffix = '', prefix = '' }) => {
   const [count, setCount] = useState(0);
-  const [ref, isIntersecting] = useIntersectionObserver({ threshold: 0.5 });
+  const [ref, isIntersecting] = useIntersectionObserver();
 
   useEffect(() => {
     if (isIntersecting) {
       let startTime;
+      let animationId;
+      
       const animate = (currentTime) => {
         if (!startTime) startTime = currentTime;
         const progress = Math.min((currentTime - startTime) / duration, 1);
-        setCount(Math.floor(progress * end));
+        
+        // Smooth easing function
+        const easedProgress = 1 - Math.pow(1 - progress, 3);
+        setCount(Math.floor(easedProgress * end));
         
         if (progress < 1) {
-          requestAnimationFrame(animate);
+          animationId = requestAnimationFrame(animate);
         }
       };
-      requestAnimationFrame(animate);
+      
+      animationId = requestAnimationFrame(animate);
+      
+      return () => {
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+      };
     }
   }, [isIntersecting, end, duration]);
 
@@ -74,20 +100,19 @@ const StatCounter = ({ end, duration = 2000, suffix = '', prefix = '' }) => {
   );
 };
 
-// Skill Card Component - Redesigned without percentages
+// Optimized Skill Card Component
 const SkillCard = ({ skill, delay = 0, category, level }) => {
-  const [ref, isIntersecting] = useIntersectionObserver({ threshold: 0.5 });
+  const [ref, isIntersecting] = useIntersectionObserver();
   const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
     if (isIntersecting && !animated) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setAnimated(true);
       }, delay);
+      return () => clearTimeout(timer);
     }
   }, [isIntersecting, animated, delay]);
-
-
 
   return (
     <div ref={ref} className={`skill-card ${animated ? 'animate-in' : ''}`}>
@@ -100,48 +125,6 @@ const SkillCard = ({ skill, delay = 0, category, level }) => {
   );
 };
 
-// Project Card Component
-const ProjectCard = ({ project, index }) => {
-  const [ref, isIntersecting] = useIntersectionObserver({ threshold: 0.3 });
-  const [animated, setAnimated] = useState(false);
-
-  useEffect(() => {
-    if (isIntersecting && !animated) {
-      setTimeout(() => {
-        setAnimated(true);
-      }, index * 200);
-    }
-  }, [isIntersecting, animated, index]);
-
-  return (
-    <div 
-      ref={ref} 
-      className={`project-card ${animated ? 'animate-in' : ''}`}
-    >
-      <div className="project-header">
-        <div>
-          <h3 className="project-title">{project.title}</h3>
-          {project.featured && <span className="featured-badge">{project.featuredText}</span>}
-        </div>
-      </div>
-      
-      <p className="project-description">{project.description}</p>
-      
-      <div className="tech-stack">
-        {project.technologies.map((tech, i) => (
-          <span key={i} className="tech-tag">{tech}</span>
-        ))}
-      </div>
-      
-      {project.metrics && (
-        <div className="metrics-box">
-          <div className="metrics-label">{project.metricsLabel}</div>
-          <div className="metrics-value">{project.metrics}</div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 // Translation data
 const translations = {
@@ -167,15 +150,15 @@ const translations = {
     // Stats
     stats: [
       { number: 490, suffix: 'k', label: 'Custo Anual: 6 Especialistas' },
-      { number: 80, suffix: 'k', label: 'Backend + Frontend Dev' },
-      { number: 90, suffix: 'k', label: 'DevOps + AI Engineer' },
-      { number: 70, suffix: 'k', label: 'Designer + Video Editor' }
+      { number: 155, suffix: 'k', label: 'Backend + Frontend Dev' },
+      { number: 200, suffix: 'k', label: 'DevOps + AI Engineer' },
+      { number: 135, suffix: 'k', label: 'Designer + Video Editor' }
     ],
     
     // About
     about: {
-      title: 'A pergunta que toda empresa se faz:',
-      highlightTitle: 'Por que contratar 6 pessoas quando 1 resolve tudo?',
+      title: 'Quanto custa montar um time completo de tecnologia?',
+      highlightTitle: 'Por que contratar 6 pessoas quando 1 consegue resolver?',
       highlightText: 'Enquanto você gastaria $490k/ano montando um time completo, eu entrego o mesmo resultado por uma fração do custo. Sem contratações demoradas, sem gestão de equipe, sem conflitos internos.',
       teamBreakdown: {
         title: 'O que você economiza contratando apenas 1 pessoa:',
@@ -270,8 +253,8 @@ const translations = {
     
     // About
     about: {
-      title: 'The question every company asks:',
-      highlightTitle: 'Why hire 6 people when 1 solves everything?',
+      title: 'How much does it cost to build a complete tech team?',
+      highlightTitle: 'Why hire 6 people when 1 can solve it all?',
       highlightText: 'While you would spend $490k/year building a complete team, I deliver the same results for a fraction of the cost. No lengthy hiring processes, no team management, no internal conflicts.',
       teamBreakdown: {
         title: 'What you save by hiring just 1 person:',
