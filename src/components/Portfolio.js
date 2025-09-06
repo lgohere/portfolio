@@ -214,8 +214,8 @@ const translations = {
     
     // Contact
     contact: {
-      title: 'Vamos discutir seu projeto',
-      description: 'Pronto para transformar operações manuais em sistemas inteligentes? Vamos conversar sobre como posso ser seu departamento de TI completo e gerar ROI imediato para seu negócio.',
+      title: 'Vamos conversar',
+      description: 'Conte comigo para tirar seu projeto do papel!',
       whatsapp: 'WhatsApp',
       email: 'Email',
       linkedin: 'LinkedIn',
