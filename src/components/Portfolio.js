@@ -150,144 +150,94 @@ const translations = {
     nav: {
       about: 'Sobre',
       skills: 'Skills',
-      projects: 'Projetos',
       contact: 'Contato'
     },
     
     // Hero Section
     hero: {
       greeting: '',
-      title: 'Lead Full Stack Developer & Arquiteto de Soluções Digitais',
-      subtitle: 'Desenvolvimento com IA • Automação End-to-End',
-      tagline: 'Inovação • Tecnologia • Resultados',
-      description: 'Transformo ideias em soluções tecnológicas inovadoras com abordagem AI-Enhanced. Especializado em desenvolvimento full-stack, automação end-to-end e arquitetura de soluções digitais escaláveis.',
-      viewProjects: 'Ver Projetos',
-      letsChat: 'Vamos Conversar'
+      title: 'AI Solutions Architect & Full Stack Developer',
+      subtitle: 'Transformo operações manuais em sistemas inteligentes',
+      tagline: 'Zero-to-Cloud • 95%+ Precisão • Resultados Mensuráveis',
+      description: 'Seu departamento de TI completo em uma pessoa. Especialista em arquiteturas LLM-First e transformações digitais que geram ROI imediato.',
+      viewProjects: 'Ver como posso ajudar',
+      letsChat: 'Vamos conversar'
     },
     
     // Stats
     stats: [
-      { number: 30, suffix: '+', label: 'Projetos Entregues' },
-      { number: 4, suffix: '+', label: 'Anos de Experiência' },
-      { number: 83, suffix: '%', label: 'Redução em Processos' },
-      { number: 99, suffix: '%', label: 'Uptime de Sistemas' }
+      { number: 490, suffix: 'k', label: 'Custo Anual: 6 Especialistas' },
+      { number: 80, suffix: 'k', label: 'Backend + Frontend Dev' },
+      { number: 90, suffix: 'k', label: 'DevOps + AI Engineer' },
+      { number: 70, suffix: 'k', label: 'Designer + Video Editor' }
     ],
     
     // About
     about: {
-      title: 'Sobre Mim',
-      highlightTitle: 'Transformação Digital com Propósito',
-      highlightText: 'Com 4 anos de experiência sólida em tecnologia, especializo-me em criar soluções que realmente fazem a diferença. Minha abordagem combina expertise técnica com visão estratégica para entregar resultados mensuráveis e impacto real.',
+      title: 'A pergunta que toda empresa se faz:',
+      highlightTitle: 'Por que contratar 6 pessoas quando 1 resolve tudo?',
+      highlightText: 'Enquanto você gastaria $490k/ano montando um time completo, eu entrego o mesmo resultado por uma fração do custo. Sem contratações demoradas, sem gestão de equipe, sem conflitos internos.',
+      teamBreakdown: {
+        title: 'O que você economiza contratando apenas 1 pessoa:',
+        positions: [
+          { role: 'Backend Developer', salary: '$80k', description: 'APIs, bancos de dados, lógica de negócio' },
+          { role: 'Frontend Developer', salary: '$75k', description: 'Interfaces, experiência do usuário' },
+          { role: 'DevOps Engineer', salary: '$90k', description: 'Infraestrutura, deploy, monitoramento' },
+          { role: 'UI/UX Designer', salary: '$70k', description: 'Design, prototipagem, usabilidade' },
+          { role: 'AI Engineer', salary: '$110k', description: 'Inteligência artificial, automação' },
+          { role: 'Video Editor/Creative', salary: '$65k', description: 'Conteúdo visual, marketing criativo' }
+        ],
+        total: '$490k/ano'
+      },
       expertiseAreas: [
         {
-          title: 'Inteligência Artificial',
-          description: 'Desenvolvimento de soluções com Claude, OpenAI e Gemini para automação, análise de dados e processamento de linguagem natural.'
+          title: 'Elimino o setup complexo',
+          description: 'Sem meses perdidos contratando, integrando e sincronizando equipes. Resultado desde o primeiro dia.',
+          benefit: '6-12 meses de economia'
         },
         {
-          title: 'Automação de Processos',
-          description: 'Criação de workflows automatizados com N8N e Evolution API para otimizar operações e reduzir custos operacionais.'
+          title: 'Zero overhead de gestão',
+          description: 'Sem reuniões intermináveis, conflitos de equipe ou alinhamentos constantes. Foco total no resultado.',
+          benefit: '40% mais produtividade'
         },
         {
-          title: 'Desenvolvimento Full Stack',
-          description: 'Construção de aplicações web completas com Python/Django e Vue.js, focando em performance e experiência do usuário.'
+          title: 'Stack tecnológico unificado',
+          description: 'Decisões técnicas consistentes, arquitetura coesa, sem retrabalho por falta de comunicação.',
+          benefit: '70% menos bugs'
         },
         {
-          title: 'Arquitetura de Sistemas',
-          description: 'Design de arquiteturas escaláveis com Docker e PostgreSQL para aplicações de alta demanda.'
+          title: 'ROI mensurável desde o início',
+          description: 'Cada linha de código tem propósito. Cada funcionalidade gera valor. Sem desperdício.',
+          benefit: 'Payback em 60 dias'
         }
       ]
     },
     
     // Skills
     skills: {
-      title: 'Competências Técnicas',
+      title: 'Stack tecnológico especializado',
       list: [
-        { skill: 'Python/Django', level: 'Especialista', category: 'Backend' },
-        { skill: 'Vue.js/JavaScript', level: 'Avançado', category: 'Frontend' },
-        { skill: 'Claude/GPT/Gemini', level: 'Especialista', category: 'IA' },
-        { skill: 'N8N/Evolution API', level: 'Especialista', category: 'Automação' },
-        { skill: 'PostgreSQL/Supabase', level: 'Avançado', category: 'Database' },
-        { skill: 'Docker/Coolify', level: 'Avançado', category: 'DevOps' },
-        { skill: 'Figma/LeonardoAI/Ideogram', level: 'Avançado', category: 'Creative' },
-        { skill: 'Video/CapCut/Kling AI', level: 'Avançado', category: 'Multimedia' }
+        { skill: 'LangChain/LangGraph/LangSmith', level: 'Especialista', category: 'AI Architecture' },
+        { skill: 'Python/Django/FastAPI', level: 'Especialista', category: 'Backend' },
+        { skill: 'Next.js/Vue.js/React', level: 'Especialista', category: 'Frontend' },
+        { skill: 'Claude Code/MCP', level: 'Especialista', category: 'AI Engineering' },
+        { skill: 'PostgreSQL/Neo4j/Redis', level: 'Avançado', category: 'Database' },
+        { skill: 'Docker/Hetzner/Coolify', level: 'Avançado', category: 'Cloud/DevOps' },
+        { skill: 'RAG/GraphRAG Systems', level: 'Especialista', category: 'AI Systems' },
+        { skill: 'n8n/Webhook Architecture', level: 'Avançado', category: 'Automation' }
       ]
     },
     
-    // Projects
-    projects: {
-      title: 'Projetos em Destaque',
-      list: [
-        {
-          title: 'Salus Water - Ecossistema Digital',
-          description: 'Arquitetura completa de soluções digitais para empresa de sistemas de filtração de água situada na Florida USA. Liderança em desenvolvimento full-stack, integração de IA e automação de processos empresariais.',
-          technologies: ['Python', 'Django', 'Vue.js', 'AI Integration', 'Docker', 'Infrastructure'],
-          metrics: 'Posição atual: Lead Full Stack Developer & Arquiteto de Soluções Digitais',
-          metricsLabel: 'Status',
-          featured: true,
-          featuredText: 'Atual'
-        },
-        {
-          title: 'AutoVideoGen - Sistema de Produção Automatizada',
-          description: 'Sistema de IA avançada que automatiza completamente a criação de videoclipes infantis a partir de arquivos de áudio. Pipeline end-to-end com múltiplas APIs de IA para geração de conteúdo visual coerente.',
-          technologies: ['Python', 'Streamlit', 'OpenAI GPT-4o', 'Leonardo.AI', 'Kling.AI', 'Groq Whisper', 'FFmpeg'],
-          metrics: '70% redução no tempo de processamento, 95% consistência visual, pipeline paralelo',
-          metricsLabel: 'Performance',
-          featured: true,
-          featuredText: 'Inovação'
-        },
-        {
-          title: 'WOA Network - Localização Musical',
-          description: 'Plataforma de adaptação cultural e dublagem musical em parceria com engenheiro vencedor do Grammy Latino. Adaptação de 700+ músicas com impacto global massivo.',
-          technologies: ['Cultural Adaptation', 'Audio Engineering', 'Content Creation', 'YouTube', 'Music Production'],
-          metrics: '60+ milhões de visualizações, 700+ músicas adaptadas, 1.9M views em single',
-          metricsLabel: 'Impacto',
-          featured: true,
-          featuredText: 'Destaque'
-        },
-        {
-          title: 'Allive AI Solutions Platform',
-          description: 'Marketplace vertical de IA com deployment automatizado. Agentes especializados com capacidade de engajamento ativo em vendas e sistema de chat em tempo real com parsing de markdown.',
-          technologies: ['Python', 'Django', 'OpenAI', 'LangChain', 'PostgreSQL', 'Vue.js', 'Docker'],
-          metrics: '60% melhoria na eficiência de deployment, arquitetura de microsserviços escalável',
-          metricsLabel: 'Impacto',
-          featured: false,
-          featuredText: 'Destaque'
-        },
-        {
-          title: 'Sistema de Processamento YouTube com IA',
-          description: 'Sistema automatizado de processamento de vídeo usando Moviepy, reduzindo tempo de edição em 83% (de 60 para 10 minutos) para conteúdo de livestreams de 2 horas.',
-          technologies: ['Python', 'Moviepy', 'Celery', 'Redis', 'ThreadPoolExecutor', 'OpenAI'],
-          metrics: '83% redução no tempo de edição (60→10 min), economia de $2,000+ mensais',
-          metricsLabel: 'Impacto',
-          featured: true,
-          featuredText: 'Destaque'
-        },
-        {
-          title: 'Cactus Bot - Sistema de Monitoramento',
-          description: 'Sistema de monitoramento 24/7 com filtragem inteligente e thresholds configuráveis. Infraestrutura tolerante a falhas com logs rotativos.',
-          technologies: ['Django', 'Selenium', 'AJAX', 'jQuery', 'Python'],
-          metrics: '99.9% uptime, 40% aumento na aquisição de projetos de alto valor',
-          metricsLabel: 'Impacto'
-        },
-        {
-          title: 'Enago Bot - Gestão Acadêmica',
-          description: 'Sistema automatizado para gestão acadêmica com interface de monitoramento em tempo real e operações thread-safe com zero conflitos.',
-          technologies: ['Django', 'PostgreSQL', 'HTML5', 'jQuery', 'Python'],
-          metrics: 'Resposta de minutos→segundos, 35% melhoria na captura de assignments',
-          metricsLabel: 'Impacto'
-        }
-      ]
-    },
     
     // Contact
     contact: {
-      title: 'Vamos Trabalhar Juntos',
-      description: 'Pronto para transformar suas ideias em realidade? Entre em contato e vamos discutir como posso ajudar seu projeto a alcançar o próximo nível.',
+      title: 'Vamos discutir seu projeto',
+      description: 'Pronto para transformar operações manuais em sistemas inteligentes? Vamos conversar sobre como posso ser seu departamento de TI completo e gerar ROI imediato para seu negócio.',
       whatsapp: 'WhatsApp',
       email: 'Email',
       linkedin: 'LinkedIn',
-      footer: '© 2025 Luiz Gouveia. Desenvolvido com tecnologia e paixão.',
-      whatsappMessage: 'Olá! Gostaria de conversar sobre oportunidades de colaboração.'
+      footer: '© 2025 Luiz Gouveia. AI Solutions Architect & Full Stack Developer.',
+      whatsappMessage: 'Olá! Tenho interesse em conversar sobre transformação digital do meu negócio.'
     }
   },
   
@@ -296,144 +246,94 @@ const translations = {
     nav: {
       about: 'About',
       skills: 'Skills',
-      projects: 'Projects',
       contact: 'Contact'
     },
     
     // Hero Section
     hero: {
       greeting: '',
-      title: 'Lead Full Stack Developer & Digital Solutions Architect',
-      subtitle: 'AI-Enhanced Development • End-to-End Automation',
-      tagline: 'Innovation • Technology • Results',
-      description: 'I transform ideas into innovative technological solutions with AI-Enhanced approach. Specialized in full-stack development, end-to-end automation, and scalable digital solutions architecture.',
-      viewProjects: 'View Projects',
-      letsChat: 'Let\'s Talk'
+      title: 'AI Solutions Architect & Full Stack Developer',
+      subtitle: 'I transform manual operations into intelligent systems',
+      tagline: 'Zero-to-Cloud • 95%+ Accuracy • Measurable Results',
+      description: 'Your complete IT department in one person. Expert in LLM-First architectures and digital transformations that generate immediate ROI.',
+      viewProjects: 'See how I can help',
+      letsChat: 'Let\'s talk'
     },
     
     // Stats
     stats: [
-      { number: 30, suffix: '+', label: 'Projects Delivered' },
-      { number: 4, suffix: '+', label: 'Years of Experience' },
-      { number: 83, suffix: '%', label: 'Process Reduction' },
-      { number: 99, suffix: '%', label: 'System Uptime' }
+      { number: 490, suffix: 'k', label: 'Annual Cost: 6 Specialists' },
+      { number: 155, suffix: 'k', label: 'Backend + Frontend Dev' },
+      { number: 200, suffix: 'k', label: 'DevOps + AI Engineer' },
+      { number: 135, suffix: 'k', label: 'Designer + Video Editor' }
     ],
     
     // About
     about: {
-      title: 'About Me',
-      highlightTitle: 'Digital Transformation with Purpose',
-      highlightText: 'With 4 years of solid experience in technology, I specialize in creating solutions that truly make a difference. My approach combines technical expertise with strategic vision to deliver measurable results and real impact.',
+      title: 'The question every company asks:',
+      highlightTitle: 'Why hire 6 people when 1 solves everything?',
+      highlightText: 'While you would spend $490k/year building a complete team, I deliver the same results for a fraction of the cost. No lengthy hiring processes, no team management, no internal conflicts.',
+      teamBreakdown: {
+        title: 'What you save by hiring just 1 person:',
+        positions: [
+          { role: 'Backend Developer', salary: '$80k', description: 'APIs, databases, business logic' },
+          { role: 'Frontend Developer', salary: '$75k', description: 'Interfaces, user experience' },
+          { role: 'DevOps Engineer', salary: '$90k', description: 'Infrastructure, deployment, monitoring' },
+          { role: 'UI/UX Designer', salary: '$70k', description: 'Design, prototyping, usability' },
+          { role: 'AI Engineer', salary: '$110k', description: 'Artificial intelligence, automation' },
+          { role: 'Video Editor/Creative', salary: '$65k', description: 'Visual content, creative marketing' }
+        ],
+        total: '$490k/year'
+      },
       expertiseAreas: [
         {
-          title: 'Artificial Intelligence',
-          description: 'Development of AI solutions using Claude, OpenAI, and Gemini for automation, data analysis, and natural language processing.'
+          title: 'I eliminate complex setup',
+          description: 'No months lost hiring, integrating and synchronizing teams. Results from day one.',
+          benefit: '6-12 months savings'
         },
         {
-          title: 'Process Automation',
-          description: 'Creation of automated workflows with N8N and Evolution API to optimize operations and reduce operational costs.'
+          title: 'Zero management overhead',
+          description: 'No endless meetings, team conflicts or constant alignment. Total focus on results.',
+          benefit: '40% more productivity'
         },
         {
-          title: 'Full Stack Development',
-          description: 'Building complete web applications with Python/Django and Vue.js, focusing on performance and user experience.'
+          title: 'Unified tech stack',
+          description: 'Consistent technical decisions, cohesive architecture, no rework due to miscommunication.',
+          benefit: '70% fewer bugs'
         },
         {
-          title: 'Systems Architecture',
-          description: 'Design of scalable architectures with Docker and PostgreSQL for high-demand applications.'
+          title: 'Measurable ROI from the start',
+          description: 'Every line of code has purpose. Every feature generates value. No waste.',
+          benefit: 'Payback in 60 days'
         }
       ]
     },
     
     // Skills
     skills: {
-      title: 'Technical Competencies',
+      title: 'Specialized tech stack',
       list: [
-        { skill: 'Python/Django', level: 'Expert', category: 'Backend' },
-        { skill: 'Vue.js/JavaScript', level: 'Advanced', category: 'Frontend' },
-        { skill: 'Claude/GPT/Gemini', level: 'Expert', category: 'AI' },
-        { skill: 'N8N/Evolution API', level: 'Expert', category: 'Automation' },
-        { skill: 'PostgreSQL/Supabase', level: 'Advanced', category: 'Database' },
-        { skill: 'Docker/Coolify', level: 'Advanced', category: 'DevOps' },
-        { skill: 'Figma/LeonardoAI/Ideogram', level: 'Advanced', category: 'Creative' },
-        { skill: 'Video/CapCut/Kling AI', level: 'Advanced', category: 'Multimedia' }
+        { skill: 'LangChain/LangGraph/LangSmith', level: 'Expert', category: 'AI Architecture' },
+        { skill: 'Python/Django/FastAPI', level: 'Expert', category: 'Backend' },
+        { skill: 'Next.js/Vue.js/React', level: 'Expert', category: 'Frontend' },
+        { skill: 'Claude Code/MCP', level: 'Expert', category: 'AI Engineering' },
+        { skill: 'PostgreSQL/Neo4j/Redis', level: 'Advanced', category: 'Database' },
+        { skill: 'Docker/Hetzner/Coolify', level: 'Advanced', category: 'Cloud/DevOps' },
+        { skill: 'RAG/GraphRAG Systems', level: 'Expert', category: 'AI Systems' },
+        { skill: 'n8n/Webhook Architecture', level: 'Advanced', category: 'Automation' }
       ]
     },
     
-    // Projects
-    projects: {
-      title: 'Featured Projects',
-      list: [
-        {
-          title: 'Salus Water - Digital Ecosystem',
-          description: 'Complete digital solutions architecture for water filtration systems company located in Florida USA. Leading full-stack development, AI integration, and enterprise process automation.',
-          technologies: ['Python', 'Django', 'Vue.js', 'AI Integration', 'Docker', 'Infrastructure'],
-          metrics: 'Current position: Lead Full Stack Developer & Digital Solutions Architect',
-          metricsLabel: 'Status',
-          featured: true,
-          featuredText: 'Current'
-        },
-        {
-          title: 'AutoVideoGen - Automated Production System',
-          description: 'Advanced AI system that completely automates the creation of children\'s video clips from audio files. End-to-end pipeline with multiple AI APIs for coherent visual content generation.',
-          technologies: ['Python', 'Streamlit', 'OpenAI GPT-4o', 'Leonardo.AI', 'Kling.AI', 'Groq Whisper', 'FFmpeg'],
-          metrics: '70% processing time reduction, 95% visual consistency, parallel pipeline',
-          metricsLabel: 'Performance',
-          featured: true,
-          featuredText: 'Innovation'
-        },
-        {
-          title: 'WOA Network - Music Localization',
-          description: 'Cultural adaptation and music dubbing platform in partnership with Latin Grammy-winning audio engineer. 700+ songs adapted with massive global impact.',
-          technologies: ['Cultural Adaptation', 'Audio Engineering', 'Content Creation', 'YouTube', 'Music Production'],
-          metrics: '60+ million views, 700+ songs adapted, 1.9M views on single track',
-          metricsLabel: 'Impact',
-          featured: true,
-          featuredText: 'Featured'
-        },
-        {
-          title: 'Allive AI Solutions Platform',
-          description: 'Vertical AI marketplace with automated deployment. Specialized agents with active sales engagement capabilities and real-time chat system with markdown parsing.',
-          technologies: ['Python', 'Django', 'OpenAI', 'LangChain', 'PostgreSQL', 'Vue.js', 'Docker'],
-          metrics: '60% deployment efficiency improvement, scalable microservices architecture',
-          metricsLabel: 'Impact',
-          featured: false,
-          featuredText: 'Featured'
-        },
-        {
-          title: 'YouTube AI Processing System',
-          description: 'Automated video processing system using Moviepy, reducing editing time by 83% (from 60 to 10 minutes) for 2-hour livestream content.',
-          technologies: ['Python', 'Moviepy', 'Celery', 'Redis', 'ThreadPoolExecutor', 'OpenAI'],
-          metrics: '83% editing time reduction (60→10 min), $2,000+ monthly savings',
-          metricsLabel: 'Impact',
-          featured: true,
-          featuredText: 'Featured'
-        },
-        {
-          title: 'Cactus Bot - Monitoring System',
-          description: '24/7 automated monitoring system with intelligent filtering and configurable thresholds. Fault-tolerant infrastructure with rotating logs.',
-          technologies: ['Django', 'Selenium', 'AJAX', 'jQuery', 'Python'],
-          metrics: '99.9% uptime, 40% increase in high-value project acquisition',
-          metricsLabel: 'Impact'
-        },
-        {
-          title: 'Enago Bot - Academic Management',
-          description: 'Automated academic management system with real-time monitoring interface and thread-safe operations with zero conflicts.',
-          technologies: ['Django', 'PostgreSQL', 'HTML5', 'jQuery', 'Python'],
-          metrics: 'Response time: minutes→seconds, 35% improvement in assignment capture',
-          metricsLabel: 'Impact'
-        }
-      ]
-    },
     
     // Contact
     contact: {
-      title: 'Let\'s Work Together',
-      description: 'Ready to transform your ideas into reality? Get in touch and let\'s discuss how I can help your project reach the next level.',
+      title: 'Let\'s discuss your project',
+      description: 'Ready to transform manual operations into intelligent systems? Let\'s talk about how I can be your complete IT department and generate immediate ROI for your business.',
       whatsapp: 'WhatsApp',
       email: 'Email',
       linkedin: 'LinkedIn',
-      footer: '© 2025 Luiz Gouveia. Built with technology and passion.',
-      whatsappMessage: 'Hello! I would like to discuss collaboration opportunities.'
+      footer: '© 2025 Luiz Gouveia. AI Solutions Architect & Full Stack Developer.',
+      whatsappMessage: 'Hello! I\'m interested in discussing the digital transformation of my business.'
     }
   }
 };
@@ -446,13 +346,11 @@ const Portfolio = () => {
   const t = translations[language];
 
   const techStack = [
-    'Python', 'Django', 'Vue.js', 'JavaScript', 'PostgreSQL',
-    'Docker', 'N8N', 'Evolution API', 'OpenAI', 'LangChain',
-    'Supabase', 'Redis', 'RabbitMQ', 'Coolify', 'Cloudflare',
-    'ElevenLabs', 'Groq', 'Midjourney', 'CapCut', 'GIMP',
-    'Cursor', 'Figma', 'GSAP', 'Tailwind CSS', 'Selenium',
-    'Celery', 'ThreadPoolExecutor', 'Hetzner', 'AWS S3', 'Kling AI',
-    'MCP', 'A2A', 'Claude 4', 'Gemini'
+    'LangChain/LangGraph', 'Claude Code', 'GPT-4o/GPT-5', 'Neo4j AuraDB',
+    'Python/Django', 'Next.js/Vue.js', 'PostgreSQL', 'Docker',
+    'RAG/GraphRAG', 'MCP', 'Hetzner/Coolify', 'Redis',
+    'n8n Workflows', 'Leonardo AI', 'Kling AI', 'FastAPI',
+    'Supabase', 'Webhook Architecture', 'TypeScript', 'Tailwind CSS'
   ];
 
   const toggleTheme = () => {
@@ -487,9 +385,6 @@ const Portfolio = () => {
             <button className="nav-btn" onClick={() => scrollToSection('skills')}>
               {t.nav.skills}
             </button>
-            <button className="nav-btn" onClick={() => scrollToSection('projects')}>
-              {t.nav.projects}
-            </button>
             <button className="nav-btn" onClick={() => scrollToSection('contact')}>
               {t.nav.contact}
             </button>
@@ -511,6 +406,11 @@ const Portfolio = () => {
 
               
               <div className="hero-titles">
+                <FadeInText delay={200}>
+                  <div className="hero-avatar">
+                    <img src="/favicon.png" alt="Luiz Gouveia" className="hero-image" />
+                  </div>
+                </FadeInText>
                 <FadeInText delay={400}>
                   <h1 className="hero-title">
                     {t.hero.title}
@@ -536,10 +436,7 @@ const Portfolio = () => {
               
               <FadeInText delay={1200}>
                 <div className="hero-actions">
-                  <a href="#projects" className="btn btn-primary">
-                    {t.hero.viewProjects}
-                  </a>
-                  <a href={getWhatsAppLink()} className="btn btn-secondary" target="_blank" rel="noopener noreferrer">
+                  <a href={getWhatsAppLink()} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
                     {t.hero.letsChat}
                   </a>
                 </div>
@@ -577,10 +474,33 @@ const Portfolio = () => {
               <p>{t.about.highlightText}</p>
             </div>
             
+            {/* Team Cost Breakdown */}
+            <div className="team-breakdown">
+              <h4 className="breakdown-title">{t.about.teamBreakdown.title}</h4>
+              <div className="positions-grid">
+                {t.about.teamBreakdown.positions.map((position, index) => (
+                  <div key={index} className="position-card">
+                    <div className="position-header">
+                      <h5 className="position-role">{position.role}</h5>
+                      <span className="position-salary">{position.salary}</span>
+                    </div>
+                    <p className="position-description">{position.description}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="total-cost">
+                <span className="total-label">Total anual:</span>
+                <span className="total-amount">{t.about.teamBreakdown.total}</span>
+              </div>
+            </div>
+            
             <div className="expertise-areas">
               {t.about.expertiseAreas.map((area, index) => (
                 <div key={index} className="expertise-item">
-                  <h4>{area.title}</h4>
+                  <div className="expertise-header">
+                    <h4>{area.title}</h4>
+                    <span className="benefit-badge">{area.benefit}</span>
+                  </div>
                   <p>{area.description}</p>
                 </div>
               ))}
@@ -615,21 +535,6 @@ const Portfolio = () => {
         </div>
       </section>
 
-      {/* Projects Section */}
-      <section className="projects" id="projects">
-        <div className="container">
-          <h2 className="section-title">{t.projects.title}</h2>
-          <div className="projects-grid">
-            {t.projects.list.map((project, index) => (
-              <ProjectCard 
-                key={index}
-                project={project}
-                index={index}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Contact Section */}
       <section className="contact" id="contact">
@@ -644,10 +549,10 @@ const Portfolio = () => {
               <a href={getWhatsAppLink()} className="contact-btn" target="_blank" rel="noopener noreferrer">
                 {t.contact.whatsapp}
               </a>
-              <a href="mailto:lcpgou@gmail.com" className="contact-btn">
+              <a href="mailto:Lcpgou@gmail.com" className="contact-btn">
                 {t.contact.email}
               </a>
-              <a href="https://linkedin.com/in/luizgouveia" className="contact-btn" target="_blank" rel="noopener noreferrer">
+              <a href="https://www.linkedin.com/in/lgohere/" className="contact-btn" target="_blank" rel="noopener noreferrer">
                 {t.contact.linkedin}
               </a>
             </div>
