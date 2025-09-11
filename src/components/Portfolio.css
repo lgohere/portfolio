@@ -141,9 +141,8 @@ body {
   font-size: var(--font-size-sm);
   font-weight: 500;
   padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: color 0.3s ease;
   position: relative;
   white-space: nowrap;
 }
@@ -162,12 +161,13 @@ body {
 
 .nav-btn:hover {
   color: var(--text-primary);
-  background: var(--bg-secondary);
 }
 
 .nav-btn:hover::after {
   width: 80%;
 }
+
+/* Light mode nav button styles - removed, using default text styling */
 
 /* Hero Section */
 .hero {
@@ -442,6 +442,13 @@ body {
   margin-left: var(--spacing-sm);
   white-space: nowrap;
   align-self: flex-start;
+}
+
+/* Mobile responsive utilities */
+@media (max-width: 480px) {
+  .hidden-mobile {
+    display: none !important;
+  }
 }
 
 /* Mobile salary badges */
@@ -785,6 +792,10 @@ body {
   background: black;
 }
 
+.contact .section-title {
+  color: #ffffff;
+}
+
 .contact-content {
   text-align: center;
   max-width: 600px;
@@ -793,7 +804,7 @@ body {
 
 .contact-description {
   font-size: var(--font-size-lg);
-  color: var(--text-secondary);
+  color: #ffffff;
   margin-bottom: var(--spacing-xl);
   line-height: 1.7;
 }
@@ -1171,12 +1182,28 @@ body {
     font-size: var(--font-size-2xl);
   }
   
+  .about-highlight {
+    max-width: 100%;
+    padding: 0 var(--spacing-sm);
+  }
+  
   .about-highlight h3 {
     font-size: var(--font-size-2xl);
+    white-space: normal;
+    word-wrap: break-word;
+    hyphens: none;
+    line-height: 1.3;
+    margin-bottom: var(--spacing-lg);
   }
   
   .about-highlight p {
     font-size: var(--font-size-base);
+    width: 100%;
+    max-width: 100%;
+    text-align: justify;
+    line-height: 1.6;
+    word-spacing: normal;
+    letter-spacing: normal;
   }
 }
 

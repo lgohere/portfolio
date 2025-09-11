@@ -140,8 +140,8 @@ const translations = {
     hero: {
       greeting: '',
       title: 'AI Solutions Architect & Full Stack Developer',
-      subtitle: 'Transformo operações manuais em sistemas inteligentes',
-      tagline: 'Zero-to-Cloud • 95%+ Precisão • Resultados Mensuráveis',
+      subtitle: 'Transformando operações manuais em sistemas inteligentes',
+      tagline: 'Zero-to-Cloud • agilidade • Resultados Mensuráveis',
       description: 'Seu departamento de TI completo em uma pessoa. Especialista em arquiteturas LLM-First e transformações digitais que geram ROI imediato.',
       viewProjects: 'Ver como posso ajudar',
       letsChat: 'Vamos conversar'
@@ -158,7 +158,7 @@ const translations = {
     // About
     about: {
       title: 'Quanto custa montar um time completo de tecnologia?',
-      highlightTitle: 'Por que contratar 6 pessoas quando 1 consegue resolver?',
+      highlightTitle: 'Por que contratar uma equipe quando alguém consegue resolver?',
       highlightText: 'Enquanto você gastaria $490k/ano montando um time completo, eu entrego o mesmo resultado por uma fração do custo. Sem contratações demoradas, sem gestão de equipe, sem conflitos internos.',
       teamBreakdown: {
         title: 'O que você economiza contratando apenas 1 pessoa:',
@@ -236,7 +236,7 @@ const translations = {
     hero: {
       greeting: '',
       title: 'AI Solutions Architect & Full Stack Developer',
-      subtitle: 'I transform manual operations into intelligent systems',
+      subtitle: 'Turning manual processes into smart, automated systems that deliver results.',
       tagline: 'Zero-to-Cloud • 95%+ Accuracy • Measurable Results',
       description: 'Your complete IT department in one person. Expert in LLM-First architectures and digital transformations that generate immediate ROI.',
       viewProjects: 'See how I can help',
@@ -324,16 +324,16 @@ const translations = {
 // Main Portfolio Component
 const Portfolio = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  const [language, setLanguage] = useState('pt');
+  const [language, setLanguage] = useState('en');
 
   const t = translations[language];
 
   const techStack = [
-    'LangChain/LangGraph', 'Claude Code', 'GPT-4o/GPT-5', 'Neo4j AuraDB',
-    'Python/Django', 'Next.js/Vue.js', 'PostgreSQL', 'Docker',
+    'LangChain/LangGraph', 'Claude Code', 'OpenAI API', 'Neo4j AuraDB',
+    'Python/Django', 'Next.js', 'React', 'Vue.js', 'PostgreSQL', 'Docker',
     'RAG/GraphRAG', 'MCP', 'Hetzner/Coolify', 'Redis',
-    'n8n Workflows', 'Leonardo AI', 'Kling AI', 'FastAPI',
-    'Supabase', 'Webhook Architecture', 'TypeScript', 'Tailwind CSS'
+    'n8n', 'RabbitMQ', 'Leonardo AI', 'Kling AI', 'FastAPI',
+    'Supabase', 'TypeScript', 'Tailwind CSS', 'Eleven Labs'
   ];
 
   const toggleTheme = () => {
@@ -360,7 +360,7 @@ const Portfolio = () => {
       {/* Header */}
       <header className="header">
         <div className="container">
-          <div className="logo">Luiz Gouveia</div>
+          <div className="logo hidden-mobile">Luiz Gouveia</div>
           <nav className="nav">
             <button className="nav-btn" onClick={() => scrollToSection('about')}>
               {t.nav.about}
@@ -391,17 +391,37 @@ const Portfolio = () => {
               <div className="hero-titles">
                 <FadeInText delay={200}>
                   <div className="hero-avatar">
-                    <img src="/favicon.png" alt="Luiz Gouveia" className="hero-image" />
+                    <img src="/favicon.png" alt="Luiz Gouveia" className="hero-image" style={{display: "block", maxWidth: "200px", width: "75%", marginBottom: "-1px"}} />
                   </div>
                 </FadeInText>
                 <FadeInText delay={400}>
                   <h1 className="hero-title">
-                    {t.hero.title}
+                    {(() => {
+                      const title = t.hero.title;
+                      const marker = 'Full Stack Developer';
+                      const idx = title.indexOf(marker);
+                      if (idx !== -1) {
+                        return (<>{title.slice(0, idx)}<br />{title.slice(idx)}</>);
+                      }
+                      return title;
+                    })()}
                   </h1>
                 </FadeInText>
                 <FadeInText delay={600}>
                   <h2 className="hero-subtitle">
-                    {t.hero.subtitle}
+                    {(() => {
+                      const sub = t.hero.subtitle;
+                      if (language === 'pt') {
+                        const marker = 'manuais';
+                        const idx = sub.indexOf(marker);
+                        if (idx !== -1) {
+                          const first = sub.slice(0, idx + marker.length);
+                          const second = sub.slice(idx + marker.length).trimStart();
+                          return (<>{first}<br />{second}</>);
+                        }
+                      }
+                      return sub;
+                    })()}
                   </h2>
                 </FadeInText>
                 <FadeInText delay={800}>
@@ -411,11 +431,6 @@ const Portfolio = () => {
                 </FadeInText>
               </div>
               
-              <FadeInText delay={1000}>
-                <p className="hero-description">
-                  {t.hero.description}
-                </p>
-              </FadeInText>
               
               <FadeInText delay={1200}>
                 <div className="hero-actions">
