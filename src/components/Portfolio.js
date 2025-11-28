@@ -118,7 +118,6 @@ const SkillCard = ({ skill, delay = 0, category, level }) => {
     <div ref={ref} className={`skill-card ${animated ? 'animate-in' : ''}`}>
       <div className="skill-header">
         <h4 className="skill-name">{skill}</h4>
-        <span className="skill-level">{level}</span>
       </div>
       <div className="skill-category">{category}</div>
     </div>
@@ -140,7 +139,6 @@ const translations = {
     hero: {
       greeting: '',
       title: 'AI Solutions Architect & Full Stack Developer',
-      subtitle: 'Transformando operações manuais em sistemas inteligentes',
       tagline: 'Zero-to-Cloud • agilidade • Resultados Mensuráveis',
       description: 'Seu departamento de TI completo em uma pessoa. Especialista em arquiteturas LLM-First e transformações digitais que geram ROI imediato.',
       viewProjects: 'Ver como posso ajudar',
@@ -158,8 +156,6 @@ const translations = {
     // About
     about: {
       title: 'Quanto custa montar um time completo de tecnologia?',
-      highlightTitle: 'Por que contratar uma equipe quando alguém consegue resolver?',
-      highlightText: 'Enquanto você gastaria $490k/ano montando um time completo, eu entrego o mesmo resultado por uma fração do custo. Sem contratações demoradas, sem gestão de equipe, sem conflitos internos.',
       teamBreakdown: {
         title: 'O que você economiza contratando apenas 1 pessoa:',
         positions: [
@@ -168,28 +164,28 @@ const translations = {
           { role: 'DevOps Engineer', salary: '$90k', description: 'Infraestrutura, deploy, monitoramento' },
           { role: 'UI/UX Designer', salary: '$70k', description: 'Design, prototipagem, usabilidade' },
           { role: 'AI Engineer', salary: '$110k', description: 'Inteligência artificial, automação' },
-          { role: 'Video Editor/Creative', salary: '$65k', description: 'Conteúdo visual, marketing criativo' }
+          { role: 'Video Editor', salary: '$65k', description: 'Conteúdo visual, marketing criativo' }
         ],
         total: '$490k/ano'
       },
       expertiseAreas: [
         {
-          title: 'Elimino o setup complexo',
+          title: 'Time-to-Market Acelerado',
           description: 'Sem meses perdidos contratando, integrando e sincronizando equipes. Resultado desde o primeiro dia.',
           benefit: '6-12 meses de economia'
         },
         {
-          title: 'Zero overhead de gestão',
+          title: 'Arquitetura Single-Point',
           description: 'Sem reuniões intermináveis, conflitos de equipe ou alinhamentos constantes. Foco total no resultado.',
           benefit: '40% mais produtividade'
         },
         {
-          title: 'Stack tecnológico unificado',
+          title: 'Stack End-to-End Coeso',
           description: 'Decisões técnicas consistentes, arquitetura coesa, sem retrabalho por falta de comunicação.',
           benefit: '70% menos bugs'
         },
         {
-          title: 'ROI mensurável desde o início',
+          title: 'KPIs Acionáveis desde Sprint 1',
           description: 'Cada linha de código tem propósito. Cada funcionalidade gera valor. Sem desperdício.',
           benefit: 'Payback em 60 dias'
         }
@@ -203,11 +199,11 @@ const translations = {
         { skill: 'LangChain/LangGraph/LangSmith', level: 'Especialista', category: 'AI Architecture' },
         { skill: 'Python/Django/FastAPI', level: 'Especialista', category: 'Backend' },
         { skill: 'Next.js/Vue.js/React', level: 'Especialista', category: 'Frontend' },
-        { skill: 'Claude Code/MCP', level: 'Especialista', category: 'AI Engineering' },
+        { skill: 'ClaudeCode/Cursor/Codex/MCPs', level: 'Especialista', category: 'AI Engineering' },
         { skill: 'PostgreSQL/Neo4j/Redis', level: 'Avançado', category: 'Database' },
         { skill: 'Docker/Hetzner/Coolify', level: 'Avançado', category: 'Cloud/DevOps' },
         { skill: 'RAG/GraphRAG Systems', level: 'Especialista', category: 'AI Systems' },
-        { skill: 'n8n/Webhook Architecture', level: 'Avançado', category: 'Automation' }
+        { skill: 'n8n', level: 'Avançado', category: 'Automation' }
       ]
     },
     
@@ -236,7 +232,6 @@ const translations = {
     hero: {
       greeting: '',
       title: 'AI Solutions Architect & Full Stack Developer',
-      subtitle: 'Turning manual processes into smart, automated systems that deliver results.',
       tagline: 'Zero-to-Cloud • 95%+ Accuracy • Measurable Results',
       description: 'Your complete IT department in one person. Expert in LLM-First architectures and digital transformations that generate immediate ROI.',
       viewProjects: 'See how I can help',
@@ -254,8 +249,6 @@ const translations = {
     // About
     about: {
       title: 'How much does it cost to build a complete tech team?',
-      highlightTitle: 'Why hire 6 people when 1 can solve it all?',
-      highlightText: 'While you would spend $490k/year building a complete team, I deliver the same results for a fraction of the cost. No lengthy hiring processes, no team management, no internal conflicts.',
       teamBreakdown: {
         title: 'What you save by hiring just 1 person:',
         positions: [
@@ -264,28 +257,28 @@ const translations = {
           { role: 'DevOps Engineer', salary: '$90k', description: 'Infrastructure, deployment, monitoring' },
           { role: 'UI/UX Designer', salary: '$70k', description: 'Design, prototyping, usability' },
           { role: 'AI Engineer', salary: '$110k', description: 'Artificial intelligence, automation' },
-          { role: 'Video Editor/Creative', salary: '$65k', description: 'Visual content, creative marketing' }
+          { role: 'Video Editor', salary: '$65k', description: 'Visual content, creative marketing' }
         ],
         total: '$490k/year'
       },
       expertiseAreas: [
         {
-          title: 'I eliminate complex setup',
+          title: 'Accelerated Time-to-Market',
           description: 'No months lost hiring, integrating and synchronizing teams. Results from day one.',
           benefit: '6-12 months savings'
         },
         {
-          title: 'Zero management overhead',
+          title: 'Single-Point Architecture',
           description: 'No endless meetings, team conflicts or constant alignment. Total focus on results.',
           benefit: '40% more productivity'
         },
         {
-          title: 'Unified tech stack',
+          title: 'Cohesive End-to-End Stack',
           description: 'Consistent technical decisions, cohesive architecture, no rework due to miscommunication.',
           benefit: '70% fewer bugs'
         },
         {
-          title: 'Measurable ROI from the start',
+          title: 'Actionable KPIs from Sprint 1',
           description: 'Every line of code has purpose. Every feature generates value. No waste.',
           benefit: 'Payback in 60 days'
         }
@@ -299,11 +292,11 @@ const translations = {
         { skill: 'LangChain/LangGraph/LangSmith', level: 'Expert', category: 'AI Architecture' },
         { skill: 'Python/Django/FastAPI', level: 'Expert', category: 'Backend' },
         { skill: 'Next.js/Vue.js/React', level: 'Expert', category: 'Frontend' },
-        { skill: 'Claude Code/MCP', level: 'Expert', category: 'AI Engineering' },
+        { skill: 'ClaudeCode/Cursor/Codex/MCPs', level: 'Expert', category: 'AI Engineering' },
         { skill: 'PostgreSQL/Neo4j/Redis', level: 'Advanced', category: 'Database' },
         { skill: 'Docker/Hetzner/Coolify', level: 'Advanced', category: 'Cloud/DevOps' },
         { skill: 'RAG/GraphRAG Systems', level: 'Expert', category: 'AI Systems' },
-        { skill: 'n8n/Webhook Architecture', level: 'Advanced', category: 'Automation' }
+        { skill: 'n8n', level: 'Advanced', category: 'Automation' }
       ]
     },
     
@@ -325,6 +318,7 @@ const translations = {
 const Portfolio = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [language, setLanguage] = useState('en');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const t = translations[language];
 
@@ -348,7 +342,12 @@ const Portfolio = () => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
+      setIsMenuOpen(false); // Close menu after clicking
     }
+  };
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
   };
 
   const getWhatsAppLink = () => {
@@ -360,8 +359,10 @@ const Portfolio = () => {
       {/* Header */}
       <header className="header">
         <div className="container">
-          <div className="logo hidden-mobile">Luiz Gouveia</div>
-          <nav className="nav">
+          <div className="logo">Luiz Gouveia</div>
+
+          {/* Desktop Navigation */}
+          <nav className="nav nav-desktop">
             <button className="nav-btn" onClick={() => scrollToSection('about')}>
               {t.nav.about}
             </button>
@@ -378,8 +379,47 @@ const Portfolio = () => {
               {isDarkMode ? '☀️' : '🌙'}
             </button>
           </nav>
+
+          {/* Mobile Navigation Controls */}
+          <div className="nav nav-mobile">
+            <button className="nav-btn" onClick={toggleLanguage}>
+              {language === 'pt' ? '🇺🇸' : '🇧🇷'}
+            </button>
+            <button className="nav-btn" onClick={toggleTheme}>
+              {isDarkMode ? '☀️' : '🌙'}
+            </button>
+            <button className={`hamburger ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}>
+              <span className="hamburger-line"></span>
+              <span className="hamburger-line"></span>
+              <span className="hamburger-line"></span>
+            </button>
+          </div>
         </div>
       </header>
+
+      {/* Mobile Menu Overlay */}
+      <div className={`mobile-menu-overlay ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}>
+        <nav className={`mobile-menu ${isMenuOpen ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
+          <div className="mobile-menu-header">
+            <span className="mobile-menu-title">MENU</span>
+            <button className="mobile-menu-close" onClick={toggleMenu}>×</button>
+          </div>
+          <div className="mobile-menu-items">
+            <button className="mobile-menu-item" onClick={() => scrollToSection('about')}>
+              <span className="mobile-menu-number">01</span>
+              <span className="mobile-menu-text">{t.nav.about}</span>
+            </button>
+            <button className="mobile-menu-item" onClick={() => scrollToSection('skills')}>
+              <span className="mobile-menu-number">02</span>
+              <span className="mobile-menu-text">{t.nav.skills}</span>
+            </button>
+            <button className="mobile-menu-item" onClick={() => scrollToSection('contact')}>
+              <span className="mobile-menu-number">03</span>
+              <span className="mobile-menu-text">{t.nav.contact}</span>
+            </button>
+          </div>
+        </nav>
+      </div>
 
       {/* Hero Section */}
       <section className="hero" id="hero">
@@ -407,23 +447,7 @@ const Portfolio = () => {
                     })()}
                   </h1>
                 </FadeInText>
-                <FadeInText delay={600}>
-                  <h2 className="hero-subtitle">
-                    {(() => {
-                      const sub = t.hero.subtitle;
-                      if (language === 'pt') {
-                        const marker = 'manuais';
-                        const idx = sub.indexOf(marker);
-                        if (idx !== -1) {
-                          const first = sub.slice(0, idx + marker.length);
-                          const second = sub.slice(idx + marker.length).trimStart();
-                          return (<>{first}<br />{second}</>);
-                        }
-                      }
-                      return sub;
-                    })()}
-                  </h2>
-                </FadeInText>
+
                 <FadeInText delay={800}>
                   <p className="hero-tagline">
                     {t.hero.tagline}
