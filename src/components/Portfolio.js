@@ -1,163 +1,299 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Portfolio.css';
 
-// Fixed Intersection Observer Hook
+// Intersection Observer Hook — reveals once, then stops observing
 const useIntersectionObserver = (options = {}) => {
   const [isIntersecting, setIsIntersecting] = useState(false);
   const ref = useRef(null);
-  const observerRef = useRef(null);
 
   useEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsIntersecting(true);
-          // Keep observing for counters
+          observer.unobserve(entry.target);
         }
-      }, 
-      {
-        threshold: 0.3,
-        rootMargin: '20px',
-        ...options
-      }
+      },
+      { threshold: 0.25, rootMargin: '0px 0px -40px 0px', ...options }
     );
 
-    observerRef.current = observer;
-    const currentRef = ref.current;
-    
-    if (currentRef) {
-      observer.observe(currentRef);
-    }
-
-    return () => {
-      if (observerRef.current && currentRef) {
-        observerRef.current.unobserve(currentRef);
-      }
-    };
+    observer.observe(node);
+    return () => observer.disconnect();
   }, [options]);
 
   return [ref, isIntersecting];
 };
 
-// Optimized Fade In Component
-const FadeInText = ({ children, delay = 0, className = "" }) => {
+// Staggered fade/slide reveal
+const FadeInText = ({ children, delay = 0, className = '' }) => {
   const [ref, isIntersecting] = useIntersectionObserver();
   const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
     if (isIntersecting && !animated) {
-      const timer = setTimeout(() => {
-        setAnimated(true);
-      }, delay);
+      const timer = setTimeout(() => setAnimated(true), delay);
       return () => clearTimeout(timer);
     }
   }, [isIntersecting, animated, delay]);
 
   return (
-    <div ref={ref} className={`${className} ${animated ? 'fade-in' : 'fade-out'}`}>
+    <div ref={ref} className={`reveal ${animated ? 'is-visible' : ''} ${className}`}>
       {children}
     </div>
   );
 };
 
-// Fixed Animated Counter
-const StatCounter = ({ end, duration = 1200, suffix = '', prefix = '' }) => {
+// Animated numeric counter
+const StatCounter = ({ end, duration = 1400, suffix = '', prefix = '' }) => {
   const [count, setCount] = useState(0);
   const [ref, isIntersecting] = useIntersectionObserver();
 
   useEffect(() => {
-    if (isIntersecting) {
-      let startTime;
-      let animationId;
-      
-      const animate = (currentTime) => {
-        if (!startTime) startTime = currentTime;
-        const progress = Math.min((currentTime - startTime) / duration, 1);
-        
-        // Smooth easing function
-        const easedProgress = 1 - Math.pow(1 - progress, 3);
-        setCount(Math.floor(easedProgress * end));
-        
-        if (progress < 1) {
-          animationId = requestAnimationFrame(animate);
-        }
-      };
-      
-      animationId = requestAnimationFrame(animate);
-      
-      return () => {
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-        }
-      };
-    }
+    if (!isIntersecting) return undefined;
+
+    let startTime;
+    let animationId;
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime;
+      const progress = Math.min((currentTime - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * end));
+      if (progress < 1) animationId = requestAnimationFrame(animate);
+    };
+    animationId = requestAnimationFrame(animate);
+    return () => animationId && cancelAnimationFrame(animationId);
   }, [isIntersecting, end, duration]);
 
   return (
-    <div ref={ref} className="stat-number">
+    <span ref={ref} className="stat-number">
       {prefix}{count}{suffix}
-    </div>
+    </span>
   );
 };
 
-// Optimized Skill Card Component
-const SkillCard = ({ skill, delay = 0, category, level }) => {
+// 3D diamond lattice — a 7x7 grid rotated 45° into a diamond that spans
+// edge-to-edge, undulating in 3D. Canvas-only, mouse-parallax, depth fog.
+const HeroScene = ({ pointer }) => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return undefined;
+    const ctx = canvas.getContext('2d');
+
+    let width = 0;
+    let height = 0;
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const rect = canvas.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      canvas.width = Math.max(1, Math.round(width * dpr));
+      canvas.height = Math.max(1, Math.round(height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    // 7x7 diamond lattice — a square grid rotated 45° into a diamond,
+    // undulating in 3D, scaled so its points reach edge-to-edge.
+    const COLS = 7;
+    const ROWS = 7;
+    const nodes = [];
+    for (let j = 0; j < ROWS; j++) {
+      for (let i = 0; i < COLS; i++) {
+        nodes.push({ u: (i / (COLS - 1)) * 2 - 1, v: (j / (ROWS - 1)) * 2 - 1 });
+      }
+    }
+    const at = (i, j) => j * COLS + i;
+    const edges = [];
+    for (let j = 0; j < ROWS; j++) {
+      for (let i = 0; i < COLS; i++) {
+        if (i < COLS - 1) edges.push([at(i, j), at(i + 1, j)]);
+        if (j < ROWS - 1) edges.push([at(i, j), at(i, j + 1)]);
+      }
+    }
+
+    const COS45 = Math.SQRT1_2;
+    const SIN45 = Math.SQRT1_2;
+    const persp = 3.4;
+    const proj = new Array(nodes.length);
+    let raf;
+
+    const draw = () => {
+      ctx.clearRect(0, 0, width, height);
+      const cx = width / 2;
+      const cy = height / 2;
+
+      const p = pointer.current;
+      p.x += (p.tx - p.x) * 0.07;
+      p.y += (p.ty - p.y) * 0.07;
+
+      // Rigid diamond, scaled up well beyond the edges. No wave: a constant
+      // tilt gives static 3D depth, the cursor adds a subtle parallax only.
+      const sx = (width / (2 * Math.SQRT2)) * 1.55;
+      const sy = (height / (2 * Math.SQRT2)) * 1.55;
+
+      const tiltX = 0.13 + p.y * 0.14;
+      const tiltY = p.x * 0.2;
+      const cosTX = Math.cos(tiltX);
+      const sinTX = Math.sin(tiltX);
+      const cosTY = Math.cos(tiltY);
+      const sinTY = Math.sin(tiltY);
+
+      for (let n = 0; n < nodes.length; n++) {
+        const nd = nodes[n];
+        const u = nd.u * COS45 - nd.v * SIN45;
+        const v = nd.u * SIN45 + nd.v * COS45;
+        const x1 = u * cosTY;
+        const z1 = u * sinTY;
+        const y1 = v * cosTX - z1 * sinTX;
+        const z2 = v * sinTX + z1 * cosTX;
+        const depth = persp / (persp - z2);
+        proj[n] = { sx: cx + x1 * sx * depth, sy: cy + y1 * sy * depth, z: z2 };
+      }
+
+      // Base lattice — faint, straight gold grid
+      ctx.lineWidth = 0.6;
+      for (let e = 0; e < edges.length; e++) {
+        const a = proj[edges[e][0]];
+        const b = proj[edges[e][1]];
+        ctx.strokeStyle = 'rgba(201,161,74,0.07)';
+        ctx.beginPath();
+        ctx.moveTo(a.sx, a.sy);
+        ctx.lineTo(b.sx, b.sy);
+        ctx.stroke();
+      }
+
+      // Cursor constellation — points light up and connect as the cursor passes
+      const rect = canvas.getBoundingClientRect();
+      const mx = p.cx - rect.left;
+      const my = p.cy - rect.top;
+      const R = Math.min(width, height) * 0.3;
+      const active = [];
+      if (p.has && mx > -R && my > -R && mx < width + R && my < height + R) {
+        for (let n = 0; n < proj.length; n++) {
+          const dx = proj[n].sx - mx;
+          const dy = proj[n].sy - my;
+          const d = Math.hypot(dx, dy);
+          if (d < R) active.push({ n, f: 1 - d / R });
+        }
+      }
+
+      // Links between nearby active points
+      for (let i = 0; i < active.length; i++) {
+        const A = proj[active[i].n];
+        for (let j = i + 1; j < active.length; j++) {
+          const B = proj[active[j].n];
+          const dx = A.sx - B.sx;
+          const dy = A.sy - B.sy;
+          if (dx * dx + dy * dy < R * R) {
+            const a = Math.min(active[i].f, active[j].f);
+            ctx.strokeStyle = `rgba(235,208,138,${a * 0.55})`;
+            ctx.lineWidth = 0.5 + a * 1.2;
+            ctx.beginPath();
+            ctx.moveTo(A.sx, A.sy);
+            ctx.lineTo(B.sx, B.sy);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // Threads from the cursor to the points it energises
+      for (let i = 0; i < active.length; i++) {
+        const A = proj[active[i].n];
+        ctx.strokeStyle = `rgba(201,161,74,${active[i].f * 0.4})`;
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        ctx.moveTo(mx, my);
+        ctx.lineTo(A.sx, A.sy);
+        ctx.stroke();
+      }
+
+      // Nodes — faint by default, glowing when energised
+      const force = new Array(proj.length).fill(0);
+      for (let i = 0; i < active.length; i++) force[active[i].n] = active[i].f;
+      for (let n = 0; n < proj.length; n++) {
+        const f = force[n];
+        if (f > 0) {
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(235,208,138,${f * 0.12})`;
+          ctx.arc(proj[n].sx, proj[n].sy, 6 + f * 13, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(235,208,138,${0.22 + f * 0.7})`;
+        ctx.arc(proj[n].sx, proj[n].sy, 1.3 + f * 3.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      raf = requestAnimationFrame(draw);
+    };
+
+    raf = requestAnimationFrame(draw);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', resize);
+    };
+  }, [pointer]);
+
+  return <canvas ref={canvasRef} className="hero-canvas" aria-hidden="true" />;
+};
+
+// Skill card with staggered reveal
+const SkillCard = ({ skill, level, category, delay = 0 }) => {
   const [ref, isIntersecting] = useIntersectionObserver();
   const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
     if (isIntersecting && !animated) {
-      const timer = setTimeout(() => {
-        setAnimated(true);
-      }, delay);
+      const timer = setTimeout(() => setAnimated(true), delay);
       return () => clearTimeout(timer);
     }
   }, [isIntersecting, animated, delay]);
 
   return (
     <div ref={ref} className={`skill-card ${animated ? 'animate-in' : ''}`}>
-      <div className="skill-header">
-        <h4 className="skill-name">{skill}</h4>
-      </div>
-      <div className="skill-category">{category}</div>
+      <span className="skill-category">{category}</span>
+      <h4 className="skill-name">{skill}</h4>
+      <span className="skill-level">{level}</span>
     </div>
   );
 };
 
-
 // Translation data
 const translations = {
   pt: {
-    // Navigation
-    nav: {
-      about: 'Sobre',
-      skills: 'Skills',
-      contact: 'Contato'
-    },
-    
-    // Hero Section
+    nav: { about: 'Proposta', skills: 'Stack', contact: 'Contato' },
+
     hero: {
-      greeting: '',
-      title: 'AI Solutions Architect & Full Stack Developer',
-      tagline: 'Zero-to-Cloud • agilidade • Resultados Mensuráveis',
-      description: 'Seu departamento de TI completo em uma pessoa. Especialista em arquiteturas LLM-First e transformações digitais que geram ROI imediato.',
-      viewProjects: 'Ver como posso ajudar',
+      kicker: 'Luiz Gouveia — AI Solutions Architect',
+      title: { lead: 'Seu departamento de TI completo em', emph: 'uma pessoa.' },
+      description:
+        'Arquiteturas LLM-First, Spec-Driven Development e transformações digitais enterprise.',
+      pillars: ['Agentic Systems', 'MCPs', 'RAG / GraphRAG'],
+      viewProjects: 'Como posso ajudar',
       letsChat: 'Vamos conversar'
     },
-    
-    // Stats
-    stats: [
-      { number: 490, suffix: 'k', label: 'Custo Anual: 6 Especialistas' },
-      { number: 155, suffix: 'k', label: 'Backend + Frontend Dev' },
-      { number: 200, suffix: 'k', label: 'DevOps + AI Engineer' },
-      { number: 135, suffix: 'k', label: 'Designer + Video Editor' }
-    ],
-    
-    // About
+
+    stats: {
+      eyebrow: 'O custo que você substitui',
+      list: [
+        { number: 490, prefix: '$', suffix: 'k', label: 'Custo anual de 6 especialistas' },
+        { number: 155, prefix: '$', suffix: 'k', label: 'Backend + Frontend Dev' },
+        { number: 200, prefix: '$', suffix: 'k', label: 'DevOps + AI Engineer' },
+        { number: 135, prefix: '$', suffix: 'k', label: 'Designer + Video Editor' }
+      ]
+    },
+
     about: {
+      eyebrow: 'A proposta',
       title: 'Quanto custa montar um time completo de tecnologia?',
       teamBreakdown: {
-        title: 'O que você economiza contratando apenas 1 pessoa:',
+        title: 'O que você economiza contratando apenas 1 pessoa',
         positions: [
           { role: 'Backend Developer', salary: '$80k', description: 'APIs, bancos de dados, lógica de negócio' },
           { role: 'Frontend Developer', salary: '$75k', description: 'Interfaces, experiência do usuário' },
@@ -166,91 +302,74 @@ const translations = {
           { role: 'AI Engineer', salary: '$110k', description: 'Inteligência artificial, automação' },
           { role: 'Video Editor', salary: '$65k', description: 'Conteúdo visual, marketing criativo' }
         ],
-        total: '$490k/ano'
+        totalLabel: 'Total anual',
+        total: '$490k'
       },
       expertiseAreas: [
-        {
-          title: 'Time-to-Market Acelerado',
-          description: 'Sem meses perdidos contratando, integrando e sincronizando equipes. Resultado desde o primeiro dia.',
-          benefit: '6-12 meses de economia'
-        },
-        {
-          title: 'Arquitetura Single-Point',
-          description: 'Sem reuniões intermináveis, conflitos de equipe ou alinhamentos constantes. Foco total no resultado.',
-          benefit: '40% mais produtividade'
-        },
-        {
-          title: 'Stack End-to-End Coeso',
-          description: 'Decisões técnicas consistentes, arquitetura coesa, sem retrabalho por falta de comunicação.',
-          benefit: '70% menos bugs'
-        },
-        {
-          title: 'KPIs Acionáveis desde Sprint 1',
-          description: 'Cada linha de código tem propósito. Cada funcionalidade gera valor. Sem desperdício.',
-          benefit: 'Payback em 60 dias'
-        }
-      ]
+        { title: 'Time-to-Market Acelerado', description: 'Sem meses perdidos contratando, integrando e sincronizando equipes. Resultado desde o primeiro dia.', benefit: '6–12 meses de economia' },
+        { title: 'Arquitetura Single-Point', description: 'Sem reuniões intermináveis, conflitos de equipe ou alinhamentos constantes. Foco total no resultado.', benefit: '40% mais produtividade' },
+        { title: 'Stack End-to-End Coeso', description: 'Decisões técnicas consistentes, arquitetura coesa, sem retrabalho por falta de comunicação.', benefit: '70% menos bugs' },
+        { title: 'KPIs Acionáveis desde a Sprint 1', description: 'Cada linha de código tem propósito. Cada funcionalidade gera valor. Sem desperdício.', benefit: 'Payback em 60 dias' }
+      ],
+      stackLabel: 'Ferramentas que opero no dia a dia'
     },
-    
-    // Skills
+
     skills: {
+      eyebrow: 'Stack',
       title: 'Stack tecnológico especializado',
       list: [
-        { skill: 'LangChain/LangGraph/LangSmith', level: 'Especialista', category: 'AI Architecture' },
-        { skill: 'Python/Django/FastAPI', level: 'Especialista', category: 'Backend' },
-        { skill: 'Next.js/Vue.js/React', level: 'Especialista', category: 'Frontend' },
-        { skill: 'ClaudeCode/Cursor/Codex/MCPs', level: 'Especialista', category: 'AI Engineering' },
-        { skill: 'PostgreSQL/Neo4j/Redis', level: 'Avançado', category: 'Database' },
-        { skill: 'Docker/Hetzner/Coolify', level: 'Avançado', category: 'Cloud/DevOps' },
-        { skill: 'RAG/GraphRAG Systems', level: 'Especialista', category: 'AI Systems' },
+        { skill: 'LangChain / LangGraph / LangSmith', level: 'Especialista', category: 'AI Architecture' },
+        { skill: 'Python / Django / FastAPI', level: 'Especialista', category: 'Backend' },
+        { skill: 'Next.js / Vue.js / React', level: 'Especialista', category: 'Frontend' },
+        { skill: 'Claude Code / Cursor / Codex / MCPs', level: 'Especialista', category: 'AI Engineering' },
+        { skill: 'PostgreSQL / Neo4j / Redis', level: 'Avançado', category: 'Database' },
+        { skill: 'Docker / Hetzner / Coolify', level: 'Avançado', category: 'Cloud / DevOps' },
+        { skill: 'RAG / GraphRAG Systems', level: 'Especialista', category: 'AI Systems' },
         { skill: 'n8n', level: 'Avançado', category: 'Automation' }
       ]
     },
-    
-    
-    // Contact
+
     contact: {
+      eyebrow: 'Contato',
       title: 'Vamos conversar',
-      description: 'Conte comigo para tirar seu projeto do papel!',
+      description:
+        'Pronto para transformar operações manuais em sistemas inteligentes? Conte comigo para ser seu departamento de TI completo e gerar ROI imediato para o seu negócio.',
       whatsapp: 'WhatsApp',
       email: 'Email',
       linkedin: 'LinkedIn',
-      footer: '© 2025 Luiz Gouveia. AI Solutions Architect & Full Stack Developer.',
-      whatsappMessage: 'Olá! Tenho interesse em conversar sobre transformação digital do meu negócio.'
+      footer: '© 2025 Luiz Gouveia — AI Solutions Architect & Full-Stack Developer.',
+      whatsappMessage: 'Olá! Tenho interesse em conversar sobre a transformação digital do meu negócio.'
     }
   },
-  
+
   en: {
-    // Navigation
-    nav: {
-      about: 'About',
-      skills: 'Skills',
-      contact: 'Contact'
-    },
-    
-    // Hero Section
+    nav: { about: 'Proposal', skills: 'Stack', contact: 'Contact' },
+
     hero: {
-      greeting: '',
-      title: 'AI Solutions Architect & Full Stack Developer',
-      tagline: 'Zero-to-Cloud • 95%+ Accuracy • Measurable Results',
-      description: 'Your complete IT department in one person. Expert in LLM-First architectures and digital transformations that generate immediate ROI.',
-      viewProjects: 'See how I can help',
-      letsChat: 'Let\'s talk'
+      kicker: 'Luiz Gouveia — AI Solutions Architect',
+      title: { lead: 'Your entire IT department,', emph: 'in one person.' },
+      description:
+        'LLM-First architectures, Spec-Driven Development and enterprise digital transformations.',
+      pillars: ['Agentic Systems', 'MCPs', 'RAG / GraphRAG'],
+      viewProjects: 'How I can help',
+      letsChat: "Let's talk"
     },
-    
-    // Stats
-    stats: [
-      { number: 490, suffix: 'k', label: 'Annual Cost: 6 Specialists' },
-      { number: 155, suffix: 'k', label: 'Backend + Frontend Dev' },
-      { number: 200, suffix: 'k', label: 'DevOps + AI Engineer' },
-      { number: 135, suffix: 'k', label: 'Designer + Video Editor' }
-    ],
-    
-    // About
+
+    stats: {
+      eyebrow: 'The cost you replace',
+      list: [
+        { number: 490, prefix: '$', suffix: 'k', label: 'Annual cost of 6 specialists' },
+        { number: 155, prefix: '$', suffix: 'k', label: 'Backend + Frontend Dev' },
+        { number: 200, prefix: '$', suffix: 'k', label: 'DevOps + AI Engineer' },
+        { number: 135, prefix: '$', suffix: 'k', label: 'Designer + Video Editor' }
+      ]
+    },
+
     about: {
+      eyebrow: 'The proposal',
       title: 'How much does it cost to build a complete tech team?',
       teamBreakdown: {
-        title: 'What you save by hiring just 1 person:',
+        title: 'What you save by hiring just 1 person',
         positions: [
           { role: 'Backend Developer', salary: '$80k', description: 'APIs, databases, business logic' },
           { role: 'Frontend Developer', salary: '$75k', description: 'Interfaces, user experience' },
@@ -259,66 +378,78 @@ const translations = {
           { role: 'AI Engineer', salary: '$110k', description: 'Artificial intelligence, automation' },
           { role: 'Video Editor', salary: '$65k', description: 'Visual content, creative marketing' }
         ],
-        total: '$490k/year'
+        totalLabel: 'Annual total',
+        total: '$490k'
       },
       expertiseAreas: [
-        {
-          title: 'Accelerated Time-to-Market',
-          description: 'No months lost hiring, integrating and synchronizing teams. Results from day one.',
-          benefit: '6-12 months savings'
-        },
-        {
-          title: 'Single-Point Architecture',
-          description: 'No endless meetings, team conflicts or constant alignment. Total focus on results.',
-          benefit: '40% more productivity'
-        },
-        {
-          title: 'Cohesive End-to-End Stack',
-          description: 'Consistent technical decisions, cohesive architecture, no rework due to miscommunication.',
-          benefit: '70% fewer bugs'
-        },
-        {
-          title: 'Actionable KPIs from Sprint 1',
-          description: 'Every line of code has purpose. Every feature generates value. No waste.',
-          benefit: 'Payback in 60 days'
-        }
-      ]
+        { title: 'Accelerated Time-to-Market', description: 'No months lost hiring, integrating and synchronizing teams. Results from day one.', benefit: '6–12 months saved' },
+        { title: 'Single-Point Architecture', description: 'No endless meetings, team conflicts or constant alignment. Total focus on results.', benefit: '40% more productivity' },
+        { title: 'Cohesive End-to-End Stack', description: 'Consistent technical decisions, cohesive architecture, no rework due to miscommunication.', benefit: '70% fewer bugs' },
+        { title: 'Actionable KPIs from Sprint 1', description: 'Every line of code has purpose. Every feature generates value. No waste.', benefit: 'Payback in 60 days' }
+      ],
+      stackLabel: 'Tools I operate day to day'
     },
-    
-    // Skills
+
     skills: {
+      eyebrow: 'Stack',
       title: 'Specialized tech stack',
       list: [
-        { skill: 'LangChain/LangGraph/LangSmith', level: 'Expert', category: 'AI Architecture' },
-        { skill: 'Python/Django/FastAPI', level: 'Expert', category: 'Backend' },
-        { skill: 'Next.js/Vue.js/React', level: 'Expert', category: 'Frontend' },
-        { skill: 'ClaudeCode/Cursor/Codex/MCPs', level: 'Expert', category: 'AI Engineering' },
-        { skill: 'PostgreSQL/Neo4j/Redis', level: 'Advanced', category: 'Database' },
-        { skill: 'Docker/Hetzner/Coolify', level: 'Advanced', category: 'Cloud/DevOps' },
-        { skill: 'RAG/GraphRAG Systems', level: 'Expert', category: 'AI Systems' },
+        { skill: 'LangChain / LangGraph / LangSmith', level: 'Expert', category: 'AI Architecture' },
+        { skill: 'Python / Django / FastAPI', level: 'Expert', category: 'Backend' },
+        { skill: 'Next.js / Vue.js / React', level: 'Expert', category: 'Frontend' },
+        { skill: 'Claude Code / Cursor / Codex / MCPs', level: 'Expert', category: 'AI Engineering' },
+        { skill: 'PostgreSQL / Neo4j / Redis', level: 'Advanced', category: 'Database' },
+        { skill: 'Docker / Hetzner / Coolify', level: 'Advanced', category: 'Cloud / DevOps' },
+        { skill: 'RAG / GraphRAG Systems', level: 'Expert', category: 'AI Systems' },
         { skill: 'n8n', level: 'Advanced', category: 'Automation' }
       ]
     },
-    
-    
-    // Contact
+
     contact: {
-      title: 'Let\'s discuss your project',
-      description: 'Ready to transform manual operations into intelligent systems? Let\'s talk about how I can be your complete IT department and generate immediate ROI for your business.',
+      eyebrow: 'Contact',
+      title: "Let's talk",
+      description:
+        'Ready to transform manual operations into intelligent systems? Let me be your complete IT department and generate immediate ROI for your business.',
       whatsapp: 'WhatsApp',
       email: 'Email',
       linkedin: 'LinkedIn',
-      footer: '© 2025 Luiz Gouveia. AI Solutions Architect & Full Stack Developer.',
-      whatsappMessage: 'Hello! I\'m interested in discussing the digital transformation of my business.'
+      footer: '© 2025 Luiz Gouveia — AI Solutions Architect & Full-Stack Developer.',
+      whatsappMessage: "Hello! I'm interested in discussing the digital transformation of my business."
     }
   }
 };
 
+const getInitialLanguage = () => {
+  try {
+    const saved = window.localStorage.getItem('lg-lang');
+    if (saved === 'pt' || saved === 'en') return saved;
+  } catch (e) { /* ignore */ }
+  if (typeof navigator !== 'undefined' && navigator.language) {
+    return navigator.language.toLowerCase().startsWith('pt') ? 'pt' : 'en';
+  }
+  return 'pt';
+};
+
+const getInitialDarkMode = () => {
+  try {
+    const saved = window.localStorage.getItem('lg-theme');
+    if (saved === 'light') return false;
+    if (saved === 'dark') return true;
+  } catch (e) { /* ignore */ }
+  return true;
+};
+
+const WHATSAPP_NUMBER = '5513981942956';
+
 // Main Portfolio Component
 const Portfolio = () => {
-  const [isDarkMode, setIsDarkMode] = useState(true);
-  const [language, setLanguage] = useState('en');
+  const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode);
+  const [language, setLanguage] = useState(getInitialLanguage);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  const heroRef = useRef(null);
+  const pointer = useRef({ x: 0, y: 0, tx: 0, ty: 0, cx: -9999, cy: -9999, has: false });
 
   const t = translations[language];
 
@@ -330,66 +461,83 @@ const Portfolio = () => {
     'Supabase', 'TypeScript', 'Tailwind CSS', 'Eleven Labs'
   ];
 
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-  };
+  useEffect(() => {
+    try { window.localStorage.setItem('lg-theme', isDarkMode ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+  }, [isDarkMode]);
 
-  const toggleLanguage = () => {
-    setLanguage(language === 'pt' ? 'en' : 'pt');
-  };
+  useEffect(() => {
+    try { window.localStorage.setItem('lg-lang', language); } catch (e) { /* ignore */ }
+    document.documentElement.lang = language === 'pt' ? 'pt-BR' : 'en';
+  }, [language]);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    const onMove = (e) => {
+      const nx = (e.clientX / window.innerWidth) * 2 - 1;
+      const ny = (e.clientY / window.innerHeight) * 2 - 1;
+      pointer.current.tx = nx;
+      pointer.current.ty = ny;
+      pointer.current.cx = e.clientX;
+      pointer.current.cy = e.clientY;
+      pointer.current.has = true;
+      if (heroRef.current) {
+        heroRef.current.style.setProperty('--mx', nx.toFixed(3));
+        heroRef.current.style.setProperty('--my', ny.toFixed(3));
+      }
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
+
+  const toggleTheme = () => setIsDarkMode((v) => !v);
+  const toggleLanguage = () => setLanguage((l) => (l === 'pt' ? 'en' : 'pt'));
+  const toggleMenu = () => setIsMenuOpen((v) => !v);
 
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
-      setIsMenuOpen(false); // Close menu after clicking
+      setIsMenuOpen(false);
     }
   };
 
-  const toggleMenu = () => {
-    setIsMenuOpen(!isMenuOpen);
-  };
-
-  const getWhatsAppLink = () => {
-    return `https://wa.me/5513981942956`;
-  };
+  const getWhatsAppLink = () =>
+    `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(t.contact.whatsappMessage)}`;
 
   return (
     <div className={`portfolio ${isDarkMode ? '' : 'light'}`}>
-      {/* Header */}
-      <header className="header">
-        <div className="container">
-          <div className="logo">Luiz Gouveia</div>
+      <div className="grain" aria-hidden="true" />
 
-          {/* Desktop Navigation */}
+      {/* Header */}
+      <header className={`header ${scrolled ? 'is-scrolled' : ''}`}>
+        <div className="container header-inner">
           <nav className="nav nav-desktop">
-            <button className="nav-btn" onClick={() => scrollToSection('about')}>
-              {t.nav.about}
+            <button className="nav-btn" onClick={() => scrollToSection('about')}>{t.nav.about}</button>
+            <button className="nav-btn" onClick={() => scrollToSection('skills')}>{t.nav.skills}</button>
+            <button className="nav-btn" onClick={() => scrollToSection('contact')}>{t.nav.contact}</button>
+            <span className="nav-sep" aria-hidden="true" />
+            <button className="nav-toggle" onClick={toggleLanguage} aria-label="Toggle language">
+              {language === 'pt' ? 'EN' : 'PT'}
             </button>
-            <button className="nav-btn" onClick={() => scrollToSection('skills')}>
-              {t.nav.skills}
-            </button>
-            <button className="nav-btn" onClick={() => scrollToSection('contact')}>
-              {t.nav.contact}
-            </button>
-            <button className="nav-btn" onClick={toggleLanguage}>
-              {language === 'pt' ? '🇺🇸' : '🇧🇷'}
-            </button>
-            <button className="nav-btn" onClick={toggleTheme}>
-              {isDarkMode ? '☀️' : '🌙'}
+            <button className="nav-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+              {isDarkMode ? '☀' : '☾'}
             </button>
           </nav>
 
-          {/* Mobile Navigation Controls */}
           <div className="nav nav-mobile">
-            <button className="nav-btn" onClick={toggleLanguage}>
-              {language === 'pt' ? '🇺🇸' : '🇧🇷'}
+            <button className="nav-toggle" onClick={toggleLanguage} aria-label="Toggle language">
+              {language === 'pt' ? 'EN' : 'PT'}
             </button>
-            <button className="nav-btn" onClick={toggleTheme}>
-              {isDarkMode ? '☀️' : '🌙'}
+            <button className="nav-toggle" onClick={toggleTheme} aria-label="Toggle theme">
+              {isDarkMode ? '☀' : '☾'}
             </button>
-            <button className={`hamburger ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}>
-              <span className="hamburger-line"></span>
+            <button className={`hamburger ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu} aria-label="Menu">
               <span className="hamburger-line"></span>
               <span className="hamburger-line"></span>
             </button>
@@ -401,7 +549,7 @@ const Portfolio = () => {
       <div className={`mobile-menu-overlay ${isMenuOpen ? 'active' : ''}`} onClick={toggleMenu}>
         <nav className={`mobile-menu ${isMenuOpen ? 'active' : ''}`} onClick={(e) => e.stopPropagation()}>
           <div className="mobile-menu-header">
-            <span className="mobile-menu-title">MENU</span>
+            <span className="mobile-menu-title">Menu</span>
             <button className="mobile-menu-close" onClick={toggleMenu}>×</button>
           </div>
           <div className="mobile-menu-items">
@@ -422,48 +570,49 @@ const Portfolio = () => {
       </div>
 
       {/* Hero Section */}
-      <section className="hero" id="hero">
+      <section className="hero" id="hero" ref={heroRef}>
+        <div className="hero-glow" aria-hidden="true" />
+        <HeroScene pointer={pointer} />
+        <div className="hero-frame" aria-hidden="true">
+          <span className="hero-frame-tag">FIG. 01 — GOUVEIA / TECH</span>
+        </div>
         <div className="container">
-          <div className="hero-content-full">
-            <div className="hero-text-center">
-
-              
-              <div className="hero-titles">
-                <FadeInText delay={200}>
-                  <div className="hero-avatar">
-                    <img src="/favicon.png" alt="Luiz Gouveia" className="hero-image" style={{display: "block", maxWidth: "200px", width: "75%", marginBottom: "-1px"}} />
-                  </div>
-                </FadeInText>
-                <FadeInText delay={400}>
-                  <h1 className="hero-title">
-                    {(() => {
-                      const title = t.hero.title;
-                      const marker = 'Full Stack Developer';
-                      const idx = title.indexOf(marker);
-                      if (idx !== -1) {
-                        return (<>{title.slice(0, idx)}<br />{title.slice(idx)}</>);
-                      }
-                      return title;
-                    })()}
-                  </h1>
-                </FadeInText>
-
-                <FadeInText delay={800}>
-                  <p className="hero-tagline">
-                    {t.hero.tagline}
-                  </p>
-                </FadeInText>
+          <div className="hero-inner">
+            <FadeInText delay={100}>
+              <div className="hero-portrait">
+                <img src={isDarkMode ? '/favicon.png' : '/favicon-light.png'} alt="Luiz Gouveia" />
               </div>
-              
-              
-              <FadeInText delay={1200}>
-                <div className="hero-actions">
-                  <a href={getWhatsAppLink()} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
-                    {t.hero.letsChat}
-                  </a>
-                </div>
-              </FadeInText>
-            </div>
+            </FadeInText>
+
+            <FadeInText delay={250}>
+              <span className="hero-kicker">
+                <span className="hero-kicker-dot" />{t.hero.kicker}
+              </span>
+            </FadeInText>
+
+            <FadeInText delay={450}>
+              <p className="hero-lead">{t.hero.description}</p>
+            </FadeInText>
+
+            <FadeInText delay={750}>
+              <ul className="hero-pillars">
+                {t.hero.pillars.map((pillar, i) => (
+                  <li key={i} className="hero-pillar">{pillar}</li>
+                ))}
+              </ul>
+            </FadeInText>
+
+            <FadeInText delay={900}>
+              <div className="hero-actions">
+                <a href={getWhatsAppLink()} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
+                  {t.hero.letsChat}
+                  <span className="btn-arrow">→</span>
+                </a>
+                <button className="btn btn-ghost" onClick={() => scrollToSection('about')}>
+                  {t.hero.viewProjects}
+                </button>
+              </div>
+            </FadeInText>
           </div>
         </div>
       </section>
@@ -471,15 +620,12 @@ const Portfolio = () => {
       {/* Stats Section */}
       <section className="stats">
         <div className="container">
+          <span className="stats-eyebrow">{t.stats.eyebrow}</span>
           <div className="stats-grid">
-            {t.stats.map((stat, index) => (
+            {t.stats.list.map((stat, index) => (
               <div key={index} className="stat-item">
-                <StatCounter 
-                  end={stat.number} 
-                  suffix={stat.suffix}
-                  prefix={stat.prefix}
-                />
-                <div className="stat-label">{stat.label}</div>
+                <StatCounter end={stat.number} suffix={stat.suffix} prefix={stat.prefix} />
+                <span className="stat-label">{stat.label}</span>
               </div>
             ))}
           </div>
@@ -489,14 +635,13 @@ const Portfolio = () => {
       {/* About Section */}
       <section className="about" id="about">
         <div className="container">
+          <header className="section-head">
+            <span className="section-index">01</span>
+            <span className="section-eyebrow">{t.about.eyebrow}</span>
+          </header>
           <h2 className="section-title">{t.about.title}</h2>
+
           <div className="about-content">
-            <div className="about-highlight">
-              <h3>{t.about.highlightTitle}</h3>
-              <p>{t.about.highlightText}</p>
-            </div>
-            
-            {/* Team Cost Breakdown */}
             <div className="team-breakdown">
               <h4 className="breakdown-title">{t.about.teamBreakdown.title}</h4>
               <div className="positions-grid">
@@ -511,30 +656,34 @@ const Portfolio = () => {
                 ))}
               </div>
               <div className="total-cost">
-                <span className="total-label">Total anual:</span>
-                <span className="total-amount">{t.about.teamBreakdown.total}</span>
+                <span className="total-label">{t.about.teamBreakdown.totalLabel}</span>
+                <span className="total-amount">{t.about.teamBreakdown.total}<span className="total-unit">/ano</span></span>
               </div>
             </div>
-            
+
             <div className="expertise-areas">
               {t.about.expertiseAreas.map((area, index) => (
                 <div key={index} className="expertise-item">
-                  <div className="expertise-header">
-                    <h4>{area.title}</h4>
-                    <span className="benefit-badge">{area.benefit}</span>
+                  <span className="expertise-index">{String(index + 1).padStart(2, '0')}</span>
+                  <div className="expertise-body">
+                    <div className="expertise-header">
+                      <h4>{area.title}</h4>
+                      <span className="benefit-badge">{area.benefit}</span>
+                    </div>
+                    <p>{area.description}</p>
                   </div>
-                  <p>{area.description}</p>
                 </div>
               ))}
             </div>
           </div>
-          
-          <div className="tech-stack-simple">
-            {techStack.map((tech, index) => (
-              <div key={index} className="tech-item">
-                <div className="tech-item-name">{tech}</div>
-              </div>
-            ))}
+
+          <span className="stack-label">{t.about.stackLabel}</span>
+          <div className="marquee" aria-hidden="true">
+            <div className="marquee-track">
+              {[...techStack, ...techStack].map((tech, index) => (
+                <span key={index} className="tech-item">{tech}</span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -542,43 +691,51 @@ const Portfolio = () => {
       {/* Skills Section */}
       <section className="skills" id="skills">
         <div className="container">
+          <header className="section-head">
+            <span className="section-index">02</span>
+            <span className="section-eyebrow">{t.skills.eyebrow}</span>
+          </header>
           <h2 className="section-title">{t.skills.title}</h2>
           <div className="skills-grid">
             {t.skills.list.map((skill, index) => (
-              <SkillCard 
+              <SkillCard
                 key={index}
                 skill={skill.skill}
                 level={skill.level}
                 category={skill.category}
-                delay={index * 100}
+                delay={index * 70}
               />
             ))}
           </div>
         </div>
       </section>
 
-
       {/* Contact Section */}
       <section className="contact" id="contact">
         <div className="container">
+          <header className="section-head">
+            <span className="section-index">03</span>
+            <span className="section-eyebrow">{t.contact.eyebrow}</span>
+          </header>
           <div className="contact-content">
-            <h2 className="section-title">{t.contact.title}</h2>
-            <p className="contact-description">
-              {t.contact.description}
-            </p>
-            
+            <h2 className="section-title contact-title">{t.contact.title}</h2>
+            <p className="contact-description">{t.contact.description}</p>
+
             <div className="contact-methods">
               <a href={getWhatsAppLink()} className="contact-btn" target="_blank" rel="noopener noreferrer">
-                {t.contact.whatsapp}
+                <span className="contact-btn-label">{t.contact.whatsapp}</span>
+                <span className="contact-btn-arrow">↗</span>
               </a>
-              <a href="mailto:Lcpgou@gmail.com" className="contact-btn">
-                {t.contact.email}
+              <a href="mailto:lgou90@gmail.com" className="contact-btn">
+                <span className="contact-btn-label">{t.contact.email}</span>
+                <span className="contact-btn-arrow">↗</span>
               </a>
               <a href="https://www.linkedin.com/in/lgohere/" className="contact-btn" target="_blank" rel="noopener noreferrer">
-                {t.contact.linkedin}
+                <span className="contact-btn-label">{t.contact.linkedin}</span>
+                <span className="contact-btn-arrow">↗</span>
               </a>
             </div>
-            
+
             <div className="contact-footer">
               <p>{t.contact.footer}</p>
             </div>
