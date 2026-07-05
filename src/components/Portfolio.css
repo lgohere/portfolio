@@ -72,7 +72,9 @@ body {
   font-family: var(--font-body);
   color: var(--bone);
   line-height: 1.62;
-  overflow-x: hidden;
+  /* `clip` (not `hidden`): a hidden overflow ancestor breaks position:sticky,
+     which the pinned hero scrub depends on */
+  overflow-x: clip;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -85,7 +87,7 @@ body {
   background: var(--ink);
   color: var(--bone);
   transition: background 0.6s var(--ease), color 0.6s var(--ease);
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 /* Blueprint grid + grain over the whole page */
@@ -279,25 +281,49 @@ body {
 .mobile-menu-text { font-family: var(--font-display); font-size: 1.5rem; font-weight: 600; color: var(--bone); }
 
 /* =========================== HERO =========================== */
+/* GSAP ScrollTrigger pins the hero (adding its own spacer) while the film
+   scrubs; no scroll track is needed in the markup. */
 .hero {
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100svh;
   display: flex;
   align-items: center;
-  padding: clamp(7rem, 14vw, 10rem) 0 var(--section-y);
+  padding: clamp(5rem, 9vw, 7rem) 0 clamp(3.5rem, 7vw, 5rem);
   overflow: hidden;
 }
-.hero-canvas { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; }
-.hero-glow {
-  position: absolute;
-  top: 8%; left: 50%;
-  transform: translateX(-50%);
-  width: min(820px, 110vw); height: 540px;
-  background: radial-gradient(ellipse at center, var(--gold-glow) 0%, transparent 64%);
-  filter: blur(26px);
-  pointer-events: none;
-  z-index: 0;
+
+/* Film layer — sits behind every hero effect. The poster (inline style, from
+   /public) shows instantly while the film blob downloads; the canvas paints
+   over it. */
+.hero-video {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden;
+  background-color: #0A0908;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
+.hero-film { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* The <video> is only a decode surface for the canvas — kept technically
+   rendered (not display:none) so browsers keep presenting frames */
+.hero-video video {
+  position: absolute;
+  width: 2px; height: 2px;
+  opacity: 0;
+  pointer-events: none;
+}
+.hero-video-scrim {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(180deg, rgba(10, 9, 8, 0.72) 0%, rgba(10, 9, 8, 0.5) 26%, rgba(10, 9, 8, 0.46) 58%, rgba(10, 9, 8, 0.82) 100%),
+    radial-gradient(ellipse at 50% 52%, rgba(10, 9, 8, 0.12) 0%, rgba(10, 9, 8, 0.42) 100%);
+}
+.portfolio.light .hero-video-scrim {
+  background:
+    linear-gradient(180deg, rgba(243, 239, 229, 0.8) 0%, rgba(243, 239, 229, 0.52) 26%, rgba(243, 239, 229, 0.46) 58%, rgba(243, 239, 229, 0.85) 100%);
+}
+
+.hero-canvas { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; }
 
 /* Drafting frame with corner registration ticks */
 .hero-frame {
@@ -326,34 +352,47 @@ body {
   letter-spacing: 0.22em;
   color: var(--gold);
 }
+.hero-frame-readout {
+  position: absolute;
+  bottom: -7px; right: 22px;
+  background: var(--ink);
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
 
 .hero .container { position: relative; z-index: 2; }
 .hero-inner { display: flex; flex-direction: column; align-items: center; text-align: center; }
+/* Copy starts hidden (no flash before GSAP takes over); the reveal timeline
+   fades each block in near the film's end */
+.hero-inner > * { opacity: 0; }
 
-.hero-portrait {
-  position: relative;
-  width: clamp(150px, 22vw, 224px);
-  margin-bottom: clamp(1.4rem, 4vw, 2.4rem);
-  transform: perspective(900px) rotateY(calc(var(--mx, 0) * 8deg)) rotateX(calc(var(--my, 0) * -8deg));
-  transition: transform 0.35s var(--ease);
-  will-change: transform;
-}
-.hero-portrait::before {
-  content: '';
+.hero-scroll-cue {
   position: absolute;
-  inset: -18%;
-  z-index: -1;
-  background: radial-gradient(circle at 50% 46%, var(--gold-glow) 0%, transparent 62%);
+  z-index: 2;
+  left: 50%;
+  bottom: clamp(28px, 5vh, 54px);
+  transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.6rem; letter-spacing: 0.3em;
+  color: var(--bone-dim);
   pointer-events: none;
 }
-.hero-portrait img {
-  width: 100%; height: auto; display: block;
-  animation: floaty 7s ease-in-out infinite;
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
+.hero-scroll-cue-line {
+  width: 1px; height: 44px;
+  background: linear-gradient(180deg, var(--gold), transparent);
+  animation: cue-drop 2.4s var(--ease) infinite;
+  transform-origin: top;
 }
-@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes cue-drop {
+  0% { transform: scaleY(0); opacity: 1; }
+  55% { transform: scaleY(1); opacity: 1; }
+  100% { transform: scaleY(1); opacity: 0; }
+}
 
 .hero-kicker {
   display: inline-flex; align-items: center; gap: 0.6rem;
@@ -625,11 +664,14 @@ body {
 }
 @media (max-width: 520px) {
   .stats-grid { grid-template-columns: 1fr; }
+  /* On narrow screens the kicker wraps to two lines and the dot strands
+     itself at the left edge — drop it, keep the type */
+  .hero-kicker-dot { display: none; }
   .skills-grid { grid-template-columns: 1fr; }
   .hero-title { font-size: clamp(2.3rem, 11vw, 3.3rem); }
   .expertise-header { flex-direction: column; }
-  .hero-portrait { transform: none; }
 }
+
 
 /* =========================== A11Y =========================== */
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
@@ -642,5 +684,8 @@ body {
     scroll-behavior: auto !important;
   }
   .reveal, .skill-card { opacity: 1 !important; transform: none !important; }
-  .hero-portrait, .hero-portrait img { animation: none; transform: none; }
+  /* No pinned scrub: the hero is a single static screen over the poster frame */
+  .hero { height: auto; min-height: 100svh; }
+  .hero-inner > * { opacity: 1 !important; }
+  .hero-scroll-cue { display: none; }
 }

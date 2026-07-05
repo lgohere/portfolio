@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import './Portfolio.css';
+
+gsap.registerPlugin(ScrollTrigger);
 
 // Intersection Observer Hook — reveals once, then stops observing
 const useIntersectionObserver = (options = {}) => {
@@ -25,25 +29,6 @@ const useIntersectionObserver = (options = {}) => {
   }, [options]);
 
   return [ref, isIntersecting];
-};
-
-// Staggered fade/slide reveal
-const FadeInText = ({ children, delay = 0, className = '' }) => {
-  const [ref, isIntersecting] = useIntersectionObserver();
-  const [animated, setAnimated] = useState(false);
-
-  useEffect(() => {
-    if (isIntersecting && !animated) {
-      const timer = setTimeout(() => setAnimated(true), delay);
-      return () => clearTimeout(timer);
-    }
-  }, [isIntersecting, animated, delay]);
-
-  return (
-    <div ref={ref} className={`reveal ${animated ? 'is-visible' : ''} ${className}`}>
-      {children}
-    </div>
-  );
 };
 
 // Animated numeric counter
@@ -73,10 +58,13 @@ const StatCounter = ({ end, duration = 1400, suffix = '', prefix = '' }) => {
     </span>
   );
 };
-
-// 3D diamond lattice — a 7x7 grid rotated 45° into a diamond that spans
-// edge-to-edge, undulating in 3D. Canvas-only, mouse-parallax, depth fog.
-const HeroScene = ({ pointer }) => {
+// The invisible draftsman — Da Vinci still at the table. Pencil scribbles
+// trace the air around the eagle while compass arcs and ruled dimension lines
+// construct themselves, linger like graphite, and fade — the same vocabulary
+// the board itself uses (flow curves, 130°/32° arcs, 2.1m dimensions). The
+// cursor is the master's hand: fresh strokes bloom near it and the work
+// quickens as the film builds. Canvas-only.
+const HeroScene = ({ pointer, progress }) => {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -98,147 +86,312 @@ const HeroScene = ({ pointer }) => {
     resize();
     window.addEventListener('resize', resize);
 
-    // 7x7 diamond lattice — a square grid rotated 45° into a diamond,
-    // undulating in 3D, scaled so its points reach edge-to-edge.
-    const COLS = 7;
-    const ROWS = 7;
-    const nodes = [];
-    for (let j = 0; j < ROWS; j++) {
-      for (let i = 0; i < COLS; i++) {
-        nodes.push({ u: (i / (COLS - 1)) * 2 - 1, v: (j / (ROWS - 1)) * 2 - 1 });
+    // Deterministic PRNG — the same hand on every visit
+    let seed = 20240613;
+    const rnd = () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let z = seed;
+      z = Math.imul(z ^ (z >>> 15), z | 1);
+      z ^= z + Math.imul(z ^ (z >>> 7), z | 61);
+      return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+    };
+
+    const reduceMotion =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const TAU = Math.PI * 2;
+    const isSmall = window.innerWidth < 720;
+    const MAX_STROKES = isSmall ? 7 : 13;
+
+    // Da Vinci's airflow — the field the flow scribbles ride: a steady stream
+    // deflected around the eagle's body at centre frame
+    const v = { x: 0, y: 0 };
+    const field = (x, y) => {
+      const u = x / width;
+      const w = y / height;
+      v.x = 1;
+      v.y = Math.sin(u * 5.1 + w * 2.1) * 0.16 + Math.sin(u * 11.3 + w * 3.7) * 0.08;
+      const dx = u - 0.5;
+      const dy = w - 0.52;
+      const bend = Math.exp(-((dx * dx) / 0.1 + (dy * dy) / 0.035));
+      v.y += (dy < 0 ? -1 : 1) * bend * 0.85;
+      v.x += bend * 0.3;
+      return v;
+    };
+
+    // The eagle owns the centre of the frame: marks passing over it go almost
+    // transparent (per segment), recovering toward the edges
+    const centerFade = (x, y) => {
+      const dx = x / width - 0.5;
+      const dy = y / height - 0.52;
+      return 1 - Math.exp(-((dx * dx) / 0.055 + (dy * dy) / 0.085)) * 0.85;
+    };
+
+    // Hand wobble: a stable per-stroke random walk pushed perpendicular to
+    // the path — drawn once, so the line trembles like graphite, not jitter
+    const wobblize = (pts, n, amp) => {
+      let wob = 0;
+      for (let k = 1; k < n; k++) {
+        const ux = pts[k * 2] - pts[(k - 1) * 2];
+        const uy = pts[k * 2 + 1] - pts[(k - 1) * 2 + 1];
+        const len = Math.hypot(ux, uy) || 1;
+        wob = wob * 0.88 + (rnd() - 0.5) * amp;
+        pts[k * 2] += (-uy / len) * wob;
+        pts[k * 2 + 1] += (ux / len) * wob;
       }
-    }
-    const at = (i, j) => j * COLS + i;
-    const edges = [];
-    for (let j = 0; j < ROWS; j++) {
-      for (let i = 0; i < COLS; i++) {
-        if (i < COLS - 1) edges.push([at(i, j), at(i + 1, j)]);
-        if (j < ROWS - 1) edges.push([at(i, j), at(i, j + 1)]);
+    };
+
+    // Freehand flow scribble following the air
+    const flowPaths = (x0, y0) => {
+      const n = 16 + Math.floor(rnd() * 18);
+      const pts = new Float32Array(n * 2);
+      let x = x0;
+      let y = y0;
+      for (let k = 0; k < n; k++) {
+        pts[k * 2] = x;
+        pts[k * 2 + 1] = y;
+        const f = field(x, y);
+        const len = Math.hypot(f.x, f.y) || 1;
+        x += (f.x / len) * 9;
+        y += (f.y / len) * 9;
       }
+      wobblize(pts, n, 1.1);
+      return [pts];
+    };
+
+    // Compass arc with radial registration ticks at both ends
+    const arcPaths = () => {
+      const cx0 = width * (0.15 + rnd() * 0.7);
+      const cy0 = height * (0.15 + rnd() * 0.7);
+      const r = 50 + rnd() * 130;
+      const a0 = rnd() * TAU;
+      const sweep = 0.5 + rnd() * 1.5;
+      const n = Math.max(12, Math.floor((sweep * r) / 8));
+      const pts = new Float32Array(n * 2);
+      for (let k = 0; k < n; k++) {
+        const a = a0 + (k / (n - 1)) * sweep;
+        pts[k * 2] = cx0 + Math.cos(a) * r;
+        pts[k * 2 + 1] = cy0 + Math.sin(a) * r;
+      }
+      wobblize(pts, n, 0.7);
+      const tick = (a) => {
+        const t2 = new Float32Array(4);
+        t2[0] = cx0 + Math.cos(a) * (r - 7);
+        t2[1] = cy0 + Math.sin(a) * (r - 7);
+        t2[2] = cx0 + Math.cos(a) * (r + 7);
+        t2[3] = cy0 + Math.sin(a) * (r + 7);
+        return t2;
+      };
+      return [pts, tick(a0), tick(a0 + sweep)];
+    };
+
+    // Ruled dimension line with perpendicular end ticks
+    const dimPaths = () => {
+      const horiz = rnd() > 0.4;
+      const len = 90 + rnd() * 150;
+      const x0 = width * (0.1 + rnd() * 0.7);
+      const y0 = height * (0.12 + rnd() * 0.72);
+      const ang = (horiz ? 0 : Math.PI / 2) + (rnd() - 0.5) * 0.06;
+      const ux = Math.cos(ang);
+      const uy = Math.sin(ang);
+      const n = Math.max(10, Math.floor(len / 9));
+      const pts = new Float32Array(n * 2);
+      for (let k = 0; k < n; k++) {
+        pts[k * 2] = x0 + (ux * len * k) / (n - 1);
+        pts[k * 2 + 1] = y0 + (uy * len * k) / (n - 1);
+      }
+      wobblize(pts, n, 0.5);
+      const tick = (tx, ty) => {
+        const t2 = new Float32Array(4);
+        t2[0] = tx + uy * 7;
+        t2[1] = ty - ux * 7;
+        t2[2] = tx - uy * 7;
+        t2[3] = ty + ux * 7;
+        return t2;
+      };
+      return [pts, tick(x0, y0), tick(x0 + ux * len, y0 + uy * len)];
+    };
+
+    // A living pool of marks; each draws itself in, lingers, fades away
+    const strokes = [];
+    const spawn = (now, nearCursor) => {
+      const p = pointer.current;
+      const roll = rnd();
+      let paths;
+      let kind;
+      if (nearCursor || roll < 0.55) {
+        kind = 'flow';
+        let x0 = width * (0.05 + rnd() * 0.75);
+        let y0 = height * (0.08 + rnd() * 0.84);
+        if (nearCursor) {
+          const rect = canvas.getBoundingClientRect();
+          x0 = p.cx - rect.left + (rnd() - 0.5) * 160;
+          y0 = p.cy - rect.top + (rnd() - 0.5) * 160;
+        }
+        paths = flowPaths(x0, y0);
+      } else if (roll < 0.82) {
+        kind = 'arc';
+        paths = arcPaths();
+      } else {
+        kind = 'dim';
+        paths = dimPaths();
+      }
+      let total = 0;
+      for (let pi = 0; pi < paths.length; pi++) total += paths[pi].length / 2;
+      strokes.push({
+        paths,
+        total,
+        kind,
+        near: rnd() > 0.45,
+        born: now,
+        tin: 700 + rnd() * 600,
+        hold: (kind === 'flow' ? 1300 : 2600) + rnd() * 1400,
+        tout: 1100 + rnd() * 700
+      });
+    };
+
+    // Reduced motion: etch one static study — the drawing without the hand
+    if (reduceMotion) {
+      ctx.lineWidth = 0.7;
+      ctx.strokeStyle = 'rgba(201,161,74,0.1)';
+      for (let sIdx = 0; sIdx < 12; sIdx++) {
+        let x = -10;
+        let y = ((sIdx + 0.5) / 12) * height;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        for (let step = 0; step < 120; step++) {
+          const f = field(x, y);
+          x += f.x * 14;
+          y += f.y * 12;
+          ctx.lineTo(x, y);
+          if (x > width + 10) break;
+        }
+        ctx.stroke();
+      }
+      return () => window.removeEventListener('resize', resize);
     }
 
-    const COS45 = Math.SQRT1_2;
-    const SIN45 = Math.SQRT1_2;
-    const persp = 3.4;
-    const proj = new Array(nodes.length);
     let raf;
+    let lastSpawn = 0;
 
-    const draw = () => {
+    const draw = (now) => {
       ctx.clearRect(0, 0, width, height);
-      const cx = width / 2;
-      const cy = height / 2;
 
       const p = pointer.current;
       p.x += (p.tx - p.x) * 0.07;
       p.y += (p.ty - p.y) * 0.07;
-
-      // Rigid diamond, scaled up well beyond the edges. No wave: a constant
-      // tilt gives static 3D depth, the cursor adds a subtle parallax only.
-      const sx = (width / (2 * Math.SQRT2)) * 1.55;
-      const sy = (height / (2 * Math.SQRT2)) * 1.55;
-
-      const tiltX = 0.13 + p.y * 0.14;
-      const tiltY = p.x * 0.2;
-      const cosTX = Math.cos(tiltX);
-      const sinTX = Math.sin(tiltX);
-      const cosTY = Math.cos(tiltY);
-      const sinTY = Math.sin(tiltY);
-
-      for (let n = 0; n < nodes.length; n++) {
-        const nd = nodes[n];
-        const u = nd.u * COS45 - nd.v * SIN45;
-        const v = nd.u * SIN45 + nd.v * COS45;
-        const x1 = u * cosTY;
-        const z1 = u * sinTY;
-        const y1 = v * cosTX - z1 * sinTX;
-        const z2 = v * sinTX + z1 * cosTX;
-        const depth = persp / (persp - z2);
-        proj[n] = { sx: cx + x1 * sx * depth, sy: cy + y1 * sy * depth, z: z2 };
-      }
-
-      // Base lattice — faint, straight gold grid
-      ctx.lineWidth = 0.6;
-      for (let e = 0; e < edges.length; e++) {
-        const a = proj[edges[e][0]];
-        const b = proj[edges[e][1]];
-        ctx.strokeStyle = 'rgba(201,161,74,0.07)';
-        ctx.beginPath();
-        ctx.moveTo(a.sx, a.sy);
-        ctx.lineTo(b.sx, b.sy);
-        ctx.stroke();
-      }
-
-      // Cursor constellation — points light up and connect as the cursor passes
       const rect = canvas.getBoundingClientRect();
       const mx = p.cx - rect.left;
       const my = p.cy - rect.top;
-      const R = Math.min(width, height) * 0.3;
-      const active = [];
-      if (p.has && mx > -R && my > -R && mx < width + R && my < height + R) {
-        for (let n = 0; n < proj.length; n++) {
-          const dx = proj[n].sx - mx;
-          const dy = proj[n].sy - my;
-          const d = Math.hypot(dx, dy);
-          if (d < R) active.push({ n, f: 1 - d / R });
-        }
+      const R = p.has ? Math.min(width, height) * 0.28 : 0;
+
+      // The master works faster as the film builds toward take-off
+      const pace = 460 - (progress ? progress.current.p : 0) * 220;
+      if (now - lastSpawn > pace && strokes.length < MAX_STROKES) {
+        lastSpawn = now;
+        spawn(now, p.has && rnd() < 0.4);
       }
 
-      // Links between nearby active points
-      for (let i = 0; i < active.length; i++) {
-        const A = proj[active[i].n];
-        for (let j = i + 1; j < active.length; j++) {
-          const B = proj[active[j].n];
-          const dx = A.sx - B.sx;
-          const dy = A.sy - B.sy;
-          if (dx * dx + dy * dy < R * R) {
-            const a = Math.min(active[i].f, active[j].f);
-            ctx.strokeStyle = `rgba(235,208,138,${a * 0.55})`;
-            ctx.lineWidth = 0.5 + a * 1.2;
-            ctx.beginPath();
-            ctx.moveTo(A.sx, A.sy);
-            ctx.lineTo(B.sx, B.sy);
-            ctx.stroke();
+      ctx.lineCap = 'round';
+      for (let iS = strokes.length - 1; iS >= 0; iS--) {
+        const st = strokes[iS];
+        const age = now - st.born;
+        let alphaK = 1;
+        let reveal = st.total;
+        if (age < st.tin) {
+          const e = age / st.tin;
+          reveal = Math.max(2, Math.floor(st.total * (1 - Math.pow(1 - e, 2))));
+        } else if (age > st.tin + st.hold) {
+          const fo = (age - st.tin - st.hold) / st.tout;
+          if (fo >= 1) {
+            strokes.splice(iS, 1);
+            continue;
+          }
+          alphaK = 1 - fo;
+        }
+
+        const ox = p.x * (st.near ? -12 : -5);
+        const oy = p.y * (st.near ? -8 : -4);
+
+        // The work catches the light near the hand
+        const main = st.paths[0];
+        const mi = Math.floor(main.length / 4) * 2;
+        let s = 0;
+        if (R > 0) {
+          const d = Math.hypot(main[mi] - mx, main[mi + 1] - my);
+          if (d < R) s = 1 - d / R;
+        }
+        const crisp = st.kind !== 'flow';
+        const aBase = ((st.near ? 0.3 : 0.18) + (crisp ? 0.08 : 0)) * alphaK * (1 + s * 1.1);
+        const wBase = (st.near ? 1.0 : 0.7) * (crisp ? 0.9 : 1);
+
+        let budget = reveal;
+        for (let pi = 0; pi < st.paths.length && budget > 1; pi++) {
+          const pts = st.paths[pi];
+          const nPts = Math.min(pts.length / 2, budget);
+          budget -= nPts;
+          // main pass + a faint offset ghost — the sketcher's double line
+          for (let pass = 0; pass < 2; pass++) {
+            const ga = pass === 0 ? aBase : aBase * 0.35;
+            const gx = pass === 0 ? 0 : 1.2;
+            const gy = pass === 0 ? 0 : -0.8;
+            for (let k = 1; k < nPts; k++) {
+              const taper = pi === 0 ? Math.sin((Math.PI * k) / (pts.length / 2)) : 1;
+              const cf = centerFade(
+                (pts[(k - 1) * 2] + pts[k * 2]) / 2,
+                (pts[(k - 1) * 2 + 1] + pts[k * 2 + 1]) / 2
+              );
+              ctx.strokeStyle = `rgba(201,161,74,${ga * cf})`;
+              ctx.lineWidth = Math.max(0.35, wBase * (0.45 + taper * 0.75));
+              ctx.beginPath();
+              ctx.moveTo(pts[(k - 1) * 2] + ox + gx, pts[(k - 1) * 2 + 1] + oy + gy);
+              ctx.lineTo(pts[k * 2] + ox + gx, pts[k * 2 + 1] + oy + gy);
+              ctx.stroke();
+            }
           }
         }
-      }
 
-      // Threads from the cursor to the points it energises
-      for (let i = 0; i < active.length; i++) {
-        const A = proj[active[i].n];
-        ctx.strokeStyle = `rgba(201,161,74,${active[i].f * 0.4})`;
-        ctx.lineWidth = 0.6;
-        ctx.beginPath();
-        ctx.moveTo(mx, my);
-        ctx.lineTo(A.sx, A.sy);
-        ctx.stroke();
-      }
-
-      // Nodes — faint by default, glowing when energised
-      const force = new Array(proj.length).fill(0);
-      for (let i = 0; i < active.length; i++) force[active[i].n] = active[i].f;
-      for (let n = 0; n < proj.length; n++) {
-        const f = force[n];
-        if (f > 0) {
-          ctx.beginPath();
-          ctx.fillStyle = `rgba(235,208,138,${f * 0.12})`;
-          ctx.arc(proj[n].sx, proj[n].sy, 6 + f * 13, 0, Math.PI * 2);
-          ctx.fill();
+        // The pencil tip — a warm glint riding the line while it draws in
+        if (age < st.tin) {
+          const hn = Math.min(main.length / 2, reveal) - 1;
+          if (hn > 0) {
+            const cf = centerFade(main[hn * 2], main[hn * 2 + 1]);
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(235,208,138,${0.55 * alphaK * cf})`;
+            ctx.arc(main[hn * 2] + ox, main[hn * 2 + 1] + oy, 1.4, 0, TAU);
+            ctx.fill();
+          }
         }
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(235,208,138,${0.22 + f * 0.7})`;
-        ctx.arc(proj[n].sx, proj[n].sy, 1.3 + f * 3.2, 0, Math.PI * 2);
-        ctx.fill();
       }
 
       raf = requestAnimationFrame(draw);
     };
 
+    // Seed the board so it never starts empty
+    for (let i = 0; i < 5; i++) spawn(performance.now() - rnd() * 2200, false);
+
     raf = requestAnimationFrame(draw);
+
+    // Sleep the render loop whenever the hero is off-screen (post-unpin)
+    let visible = true;
+    const io = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting && !visible) {
+        visible = true;
+        raf = requestAnimationFrame(draw);
+      } else if (!entry.isIntersecting && visible) {
+        visible = false;
+        cancelAnimationFrame(raf);
+      }
+    });
+    io.observe(canvas);
+
     return () => {
       cancelAnimationFrame(raf);
+      io.disconnect();
       window.removeEventListener('resize', resize);
     };
-  }, [pointer]);
+  }, [pointer, progress]);
 
   return <canvas ref={canvasRef} className="hero-canvas" aria-hidden="true" />;
 };
@@ -276,7 +429,8 @@ const translations = {
         'Arquiteturas LLM-First, Spec-Driven Development e transformações digitais enterprise.',
       pillars: ['Agentic Systems', 'MCPs', 'RAG / GraphRAG'],
       viewProjects: 'Como posso ajudar',
-      letsChat: 'Vamos conversar'
+      letsChat: 'Vamos conversar',
+      scrollCue: 'DESLIZE'
     },
 
     stats: {
@@ -352,7 +506,8 @@ const translations = {
         'LLM-First architectures, Spec-Driven Development and enterprise digital transformations.',
       pillars: ['Agentic Systems', 'MCPs', 'RAG / GraphRAG'],
       viewProjects: 'How I can help',
-      letsChat: "Let's talk"
+      letsChat: "Let's talk",
+      scrollCue: 'SCROLL'
     },
 
     stats: {
@@ -441,6 +596,17 @@ const getInitialDarkMode = () => {
 
 const WHATSAPP_NUMBER = '5513981942956';
 
+// Scroll-scrubbed hero film. Sources are encoded all-intra (every frame is a
+// keyframe) so any currentTime seek decodes instantly; the file is prefetched
+// into a blob URL so scrubbing never waits on the network.
+const HERO_FILM = {
+  mp4: '/media/eagle-scrub-h264.mp4',
+  poster: '/media/eagle-poster.jpg',
+  fps: 24,
+  // The scrub rests on this frame (eagle level, head centered), not the last
+  endFrame: 270
+};
+
 // Main Portfolio Component
 const Portfolio = () => {
   const [isDarkMode, setIsDarkMode] = useState(getInitialDarkMode);
@@ -449,7 +615,14 @@ const Portfolio = () => {
   const [scrolled, setScrolled] = useState(false);
 
   const heroRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const innerRef = useRef(null);
+  const readoutRef = useRef(null);
+  const cueRef = useRef(null);
   const pointer = useRef({ x: 0, y: 0, tx: 0, ty: 0, cx: -9999, cy: -9999, has: false });
+  // Shared with HeroScene: the wind in the air rises as the film advances
+  const filmProgress = useRef({ p: 0 });
 
   const t = translations[language];
 
@@ -470,11 +643,227 @@ const Portfolio = () => {
     document.documentElement.lang = language === 'pt' ? 'pt-BR' : 'en';
   }, [language]);
 
+  // Header chrome (blur/background) only exists from the 2nd content section
+  // down. With the scrub active, a GSAP ScrollTrigger in the film effect flips
+  // it; this listener is the reduced-motion fallback.
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
+    const reduceMotion =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduceMotion) return undefined;
+
+    const onScroll = () => {
+      const about = document.getElementById('about');
+      setScrolled(!!about && about.getBoundingClientRect().top < window.innerHeight * 0.6);
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Film scrub engine. GSAP ScrollTrigger pins the hero and eases scroll
+  // progress into film time (`scrub: 0.8` is the built-in inertia). Frames are
+  // painted onto a canvas — a scrubbed <video> element can flash/tear between
+  // seeks, a canvas always holds the last decoded frame. Seeks are chained on
+  // `seeked` so slow decodes never pile up, and the file is prefetched into a
+  // blob so seeking never touches the network. The hero copy enters just
+  // before the film's final beat and stays.
+  useEffect(() => {
+    const hero = heroRef.current;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const inner = innerRef.current;
+    if (!hero || !video || !canvas || !inner) return undefined;
+
+    const reduceMotion =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) return undefined; // CSS keeps the hero static and visible
+
+    const brush = canvas.getContext('2d');
+    let disposed = false;
+    let objectUrl = null;
+    let duration = 0;
+    let progress = 0;
+    let applied = -1;
+    let seekBusy = false;
+
+    // Cover-fit painting with a gentle push-in across the film
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const paint = () => {
+      if (!video.videoWidth || !canvas.width) return;
+      const zoom = 1.03 + progress * 0.06;
+      const scale =
+        Math.max(canvas.width / video.videoWidth, canvas.height / video.videoHeight) * zoom;
+      const w = video.videoWidth * scale;
+      const h = video.videoHeight * scale;
+      brush.drawImage(video, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+    };
+    const sizeCanvas = () => {
+      const rect = hero.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.round(rect.width * dpr));
+      canvas.height = Math.max(1, Math.round(rect.height * dpr));
+      paint();
+    };
+
+    // Progress 0-1 maps onto [0, endFrame] — the film rests on its hero frame
+    const filmEnd = () =>
+      Math.min(HERO_FILM.endFrame / HERO_FILM.fps, Math.max(0, duration - 0.06));
+
+    // Seek chain: one in-flight seek at a time, always re-aimed at the latest
+    // target once the previous decode lands.
+    const pump = () => {
+      if (disposed || !duration) return;
+      const t = progress * filmEnd();
+      if (!seekBusy && Math.abs(t - applied) > 1 / (HERO_FILM.fps * 2)) {
+        seekBusy = true;
+        applied = t;
+        video.currentTime = t;
+      }
+    };
+    const onSeeked = () => {
+      requestAnimationFrame(() => {
+        seekBusy = false;
+        paint();
+        pump();
+      });
+    };
+    const onMeta = () => {
+      duration = video.duration || 0;
+      pump();
+    };
+    video.addEventListener('loadedmetadata', onMeta);
+    video.addEventListener('loadeddata', paint);
+    video.addEventListener('seeked', onSeeked);
+
+    // iOS: a video only decodes after a user gesture "unlocks" it — and React
+    // does not reflect the `muted` prop into the DOM attribute, which is part
+    // of what earns the unlock. Set everything imperatively and prime the
+    // pipeline with a silent play/pause on the first touch.
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+    let primed = false;
+    const prime = () => {
+      if (primed || !video.src) return;
+      const attempt = video.play();
+      if (attempt && attempt.then) {
+        attempt
+          .then(() => {
+            primed = true;
+            video.pause();
+            applied = -1; // force the next pump to land a real frame
+            seekBusy = false;
+            pump();
+          })
+          .catch(() => {}); // locked (e.g. Low Power Mode) — retry on next touch
+      }
+    };
+    window.addEventListener('touchstart', prime, { passive: true });
+    window.addEventListener('pointerdown', prime, { passive: true });
+
+    // Prefetch the whole file into a blob so every seek is served from memory
+    fetch(HERO_FILM.mp4)
+      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error(`${res.status}`))))
+      .then((blob) => {
+        if (disposed) return;
+        objectUrl = URL.createObjectURL(blob);
+        video.src = objectUrl;
+        video.load();
+      })
+      .catch(() => {
+        if (disposed) return;
+        video.src = HERO_FILM.mp4;
+        video.load();
+      });
+
+    // Copy is hidden while the film plays and cascades in near its end — in
+    // both directions: scrolling back before the threshold hides it again, so
+    // the film always plays clean. The gap between the two thresholds is
+    // hysteresis so the copy never flutters at the boundary.
+    const REVEAL_IN = 0.92;
+    const REVEAL_OUT = 0.88;
+    const parts = gsap.utils.toArray(inner.children);
+    gsap.set(parts, { autoAlpha: 0, y: 26 });
+    let revealed = false;
+    const reveal = gsap
+      .timeline({ paused: true })
+      .to(parts, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.15, ease: 'power3.out' });
+
+    const film = { p: 0 };
+    // 280% of scroll plays the film; the extra 80% is a hold where the hero
+    // stays pinned with the copy on screen before releasing to the sections.
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: hero,
+        start: 'top top',
+        end: '+=360%',
+        pin: true,
+        scrub: 0.8,
+        anticipatePin: 1,
+      },
+    });
+    tl.to(film, {
+      p: 1,
+      ease: 'none',
+      duration: 2.8,
+      onUpdate: () => {
+        progress = film.p;
+        filmProgress.current.p = film.p;
+        pump();
+        if (readoutRef.current && duration) {
+          const t = progress * filmEnd();
+          const frame = String(Math.round(t * HERO_FILM.fps)).padStart(3, '0');
+          const total = Math.round(duration * HERO_FILM.fps);
+          readoutRef.current.textContent = `FR ${frame}/${total} · T+${t.toFixed(2)}s`;
+        }
+        if (cueRef.current) {
+          cueRef.current.style.opacity = String(Math.max(0, 1 - progress * 14));
+        }
+        if (!revealed && progress >= REVEAL_IN) {
+          revealed = true;
+          reveal.timeScale(1).play();
+        } else if (revealed && progress < REVEAL_OUT) {
+          revealed = false;
+          reveal.timeScale(1.6).reverse(); // exits faster than it enters
+        }
+      },
+    });
+
+    // Hold: the hero stays pinned with the copy on screen for the last
+    // stretch of the pin before the page releases to the sections.
+    tl.to({}, { duration: 0.8 });
+
+    // Header chrome (blur) enters only when the 2nd content section arrives
+    const aboutEl = document.getElementById('about');
+    const chromeTrigger = aboutEl
+      ? ScrollTrigger.create({
+          trigger: aboutEl,
+          start: 'top 60%',
+          onEnter: () => setScrolled(true),
+          onLeaveBack: () => setScrolled(false),
+        })
+      : null;
+
+    window.addEventListener('resize', sizeCanvas);
+    sizeCanvas();
+
+    return () => {
+      disposed = true;
+      if (chromeTrigger) chromeTrigger.kill();
+      if (tl.scrollTrigger) tl.scrollTrigger.kill();
+      tl.kill();
+      reveal.kill();
+      window.removeEventListener('resize', sizeCanvas);
+      window.removeEventListener('touchstart', prime);
+      window.removeEventListener('pointerdown', prime);
+      video.removeEventListener('loadedmetadata', onMeta);
+      video.removeEventListener('loadeddata', paint);
+      video.removeEventListener('seeked', onSeeked);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
   }, []);
 
   useEffect(() => {
@@ -569,51 +958,48 @@ const Portfolio = () => {
         </nav>
       </div>
 
-      {/* Hero Section */}
+      {/* Hero — pinned by ScrollTrigger while the eagle film scrubs; the copy
+          cascades in just before the final frame and stays */}
       <section className="hero" id="hero" ref={heroRef}>
-        <div className="hero-glow" aria-hidden="true" />
-        <HeroScene pointer={pointer} />
+        <div
+          className="hero-video"
+          aria-hidden="true"
+          style={{ backgroundImage: `url(${HERO_FILM.poster})` }}
+        >
+          <canvas ref={canvasRef} className="hero-film" />
+          <video ref={videoRef} muted playsInline preload="none" tabIndex={-1} />
+          <div className="hero-video-scrim" />
+        </div>
+        <HeroScene pointer={pointer} progress={filmProgress} />
         <div className="hero-frame" aria-hidden="true">
           <span className="hero-frame-tag">FIG. 01 — GOUVEIA / TECH</span>
+          <span className="hero-frame-readout" ref={readoutRef}>FR 000/292 · T+0.00s</span>
         </div>
         <div className="container">
-          <div className="hero-inner">
-            <FadeInText delay={100}>
-              <div className="hero-portrait">
-                <img src={isDarkMode ? '/favicon.png' : '/favicon-light.png'} alt="Luiz Gouveia" />
-              </div>
-            </FadeInText>
-
-            <FadeInText delay={250}>
-              <span className="hero-kicker">
-                <span className="hero-kicker-dot" />{t.hero.kicker}
-              </span>
-            </FadeInText>
-
-            <FadeInText delay={450}>
-              <p className="hero-lead">{t.hero.description}</p>
-            </FadeInText>
-
-            <FadeInText delay={750}>
-              <ul className="hero-pillars">
-                {t.hero.pillars.map((pillar, i) => (
-                  <li key={i} className="hero-pillar">{pillar}</li>
-                ))}
-              </ul>
-            </FadeInText>
-
-            <FadeInText delay={900}>
-              <div className="hero-actions">
-                <a href={getWhatsAppLink()} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
-                  {t.hero.letsChat}
-                  <span className="btn-arrow">→</span>
-                </a>
-                <button className="btn btn-ghost" onClick={() => scrollToSection('about')}>
-                  {t.hero.viewProjects}
-                </button>
-              </div>
-            </FadeInText>
+          <div className="hero-inner" ref={innerRef}>
+            <span className="hero-kicker">
+              <span className="hero-kicker-dot" />{t.hero.kicker}
+            </span>
+            <p className="hero-lead">{t.hero.description}</p>
+            <ul className="hero-pillars">
+              {t.hero.pillars.map((pillar, i) => (
+                <li key={i} className="hero-pillar">{pillar}</li>
+              ))}
+            </ul>
+            <div className="hero-actions">
+              <a href={getWhatsAppLink()} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
+                {t.hero.letsChat}
+                <span className="btn-arrow">→</span>
+              </a>
+              <button className="btn btn-ghost" onClick={() => scrollToSection('about')}>
+                {t.hero.viewProjects}
+              </button>
+            </div>
           </div>
+        </div>
+        <div className="hero-scroll-cue" aria-hidden="true" ref={cueRef}>
+          <span className="hero-scroll-cue-line" />
+          <span>{t.hero.scrollCue}</span>
         </div>
       </section>
 
