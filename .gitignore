@@ -70,3 +70,5 @@ yarn-error.log*
 
 # dotenv environment variables file
 .env
+# Raw hero film source (compressed copies live in public/media)
+/eagle-video.mp4
