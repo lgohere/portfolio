@@ -664,6 +664,9 @@ body {
 }
 @media (max-width: 520px) {
   .stats-grid { grid-template-columns: 1fr; }
+  /* On narrow screens the kicker wraps to two lines and the dot strands
+     itself at the left edge — drop it, keep the type */
+  .hero-kicker-dot { display: none; }
   .skills-grid { grid-template-columns: 1fr; }
   .hero-title { font-size: clamp(2.3rem, 11vw, 3.3rem); }
   .expertise-header { flex-direction: column; }

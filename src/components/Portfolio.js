@@ -429,7 +429,8 @@ const translations = {
         'Arquiteturas LLM-First, Spec-Driven Development e transformações digitais enterprise.',
       pillars: ['Agentic Systems', 'MCPs', 'RAG / GraphRAG'],
       viewProjects: 'Como posso ajudar',
-      letsChat: 'Vamos conversar'
+      letsChat: 'Vamos conversar',
+      scrollCue: 'DESLIZE'
     },
 
     stats: {
@@ -505,7 +506,8 @@ const translations = {
         'LLM-First architectures, Spec-Driven Development and enterprise digital transformations.',
       pillars: ['Agentic Systems', 'MCPs', 'RAG / GraphRAG'],
       viewProjects: 'How I can help',
-      letsChat: "Let's talk"
+      letsChat: "Let's talk",
+      scrollCue: 'SCROLL'
     },
 
     stats: {
@@ -734,6 +736,34 @@ const Portfolio = () => {
     video.addEventListener('loadeddata', paint);
     video.addEventListener('seeked', onSeeked);
 
+    // iOS: a video only decodes after a user gesture "unlocks" it — and React
+    // does not reflect the `muted` prop into the DOM attribute, which is part
+    // of what earns the unlock. Set everything imperatively and prime the
+    // pipeline with a silent play/pause on the first touch.
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+    let primed = false;
+    const prime = () => {
+      if (primed || !video.src) return;
+      const attempt = video.play();
+      if (attempt && attempt.then) {
+        attempt
+          .then(() => {
+            primed = true;
+            video.pause();
+            applied = -1; // force the next pump to land a real frame
+            seekBusy = false;
+            pump();
+          })
+          .catch(() => {}); // locked (e.g. Low Power Mode) — retry on next touch
+      }
+    };
+    window.addEventListener('touchstart', prime, { passive: true });
+    window.addEventListener('pointerdown', prime, { passive: true });
+
     // Prefetch the whole file into a blob so every seek is served from memory
     fetch(HERO_FILM.mp4)
       .then((res) => (res.ok ? res.blob() : Promise.reject(new Error(`${res.status}`))))
@@ -741,9 +771,12 @@ const Portfolio = () => {
         if (disposed) return;
         objectUrl = URL.createObjectURL(blob);
         video.src = objectUrl;
+        video.load();
       })
       .catch(() => {
-        if (!disposed) video.src = HERO_FILM.mp4;
+        if (disposed) return;
+        video.src = HERO_FILM.mp4;
+        video.load();
       });
 
     // Copy is hidden while the film plays and cascades in near its end — in
@@ -824,6 +857,8 @@ const Portfolio = () => {
       tl.kill();
       reveal.kill();
       window.removeEventListener('resize', sizeCanvas);
+      window.removeEventListener('touchstart', prime);
+      window.removeEventListener('pointerdown', prime);
       video.removeEventListener('loadedmetadata', onMeta);
       video.removeEventListener('loadeddata', paint);
       video.removeEventListener('seeked', onSeeked);
@@ -964,7 +999,7 @@ const Portfolio = () => {
         </div>
         <div className="hero-scroll-cue" aria-hidden="true" ref={cueRef}>
           <span className="hero-scroll-cue-line" />
-          <span>SCROLL</span>
+          <span>{t.hero.scrollCue}</span>
         </div>
       </section>
 
