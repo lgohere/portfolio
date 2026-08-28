@@ -72,3 +72,12 @@ yarn-error.log*
 .env
 # Raw hero film source (compressed copies live in public/media)
 /eagle-video.mp4
+
+# arquivos pessoais/locais fora do repo
+CV/
+Profile.pdf
+*.png
+!public/**/*.png
+check-domain.sh
+dns-config-registrobr.md
+.DS_Store
